@@ -36,3 +36,12 @@ func (n *StarNode) String() string {
   return "*"
 }
 
+type NodeBuilder struct {
+}
+
+func (b NodeBuilder) Lit(c byte) *LiteralNode { return &LiteralNode{Value: c}}
+func (b NodeBuilder) Star(child Node) *StarNode { return &StarNode{Child: child}}
+func (b NodeBuilder) Dot() *DotNode { return &DotNode{}}
+func (b NodeBuilder) Seq(children ...Node) *SequenceNode { 
+	return &SequenceNode{ Children: children}
+}

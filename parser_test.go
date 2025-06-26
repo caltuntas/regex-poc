@@ -71,17 +71,14 @@ func testSequenceNode(t *testing.T, actual *SequenceNode, expected *SequenceNode
 	return true
 }
 
+var b NodeBuilder
 func TestParse(t *testing.T) {
-	expected := &SequenceNode{
-		Children: []Node{
-			&LiteralNode{Value: 'p'},
-			&LiteralNode{Value: 'a'},
-			&StarNode{
-				Child: &DotNode{Value: '.'},
-			},
-			&LiteralNode{Value: 't'},
-		},
-	}
+	expected := b.Seq(
+		b.Lit('p'),
+		b.Lit('a'),
+		b.Star(b.Dot()),
+		b.Lit('t'),
+	);
 	l := New("pa.*t")
 	parser := NewParser(l)
 	node := parser.Ast()
