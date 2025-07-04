@@ -1,22 +1,33 @@
 package main
 
+import (
+	"fmt"
+)
+
+var stateNumber int = 1
 func Compile(n Node) Nfa {
-	nfa := Nfa{}
-	switch n.(type) {
-	case *LiteralNode:
-		return compileLiteralNode(n.(*LiteralNode))
-	case *SequenceNode:
-		return compileSequenceNode(n.(*SequenceNode))
-	case *StarNode:
-		return compileStartNode(n.(*StarNode))
-	}
-	return nfa
+	nfa := NewNfa("s")
+	return compileNode(&nfa,n)
 }
 
-func compileLiteralNode(n *LiteralNode) Nfa {
-	nfa := Nfa{}
-	start := &State{}
-	accept := &State{}
+func compileNode(nfa *Nfa, n Node) Nfa {
+	switch n.(type) {
+	case *LiteralNode:
+		return compileLiteralNode(nfa, n.(*LiteralNode))
+	case *SequenceNode:
+		return compileSequenceNode(nfa, n.(*SequenceNode))
+	case *StarNode:
+		return compileStartNode(nfa, n.(*StarNode))
+	default:
+		panic(fmt.Sprintf("Unknown node type %T",n))
+	}
+}
+
+func compileLiteralNode(parentNfa *Nfa, n *LiteralNode) Nfa {
+	nfa := NewNfa(parentNfa.StatePrefix)
+	nfa.StateCount = parentNfa.StateCount
+	start := nfa.NewStart()
+	accept := nfa.NewAccept()
 
 	var transitions []*State
 	transitions = append(transitions, accept)
@@ -24,29 +35,32 @@ func compileLiteralNode(n *LiteralNode) Nfa {
 	start.Transitions[n.Value] = transitions
 	nfa.Start = start
 	nfa.Accept = accept
+	parentNfa.StateCount = nfa.StateCount
 	return nfa
 }
 
-func compileSequenceNode(n *SequenceNode) Nfa {
-	nfa := Compile(n.Children[0])
+func compileSequenceNode(parentNfa *Nfa, n *SequenceNode) Nfa {
+	nfa := compileNode(parentNfa, n.Children[0])
 
 	for i:=1; i<len(n.Children); i++ {
-		childNfa := Compile(n.Children[i])
-		nfa = concat(nfa, childNfa)
+		childNfa := compileNode(parentNfa, n.Children[i])
+		nfa = concat(parentNfa,nfa, childNfa)
 	}
 
 	return nfa
 }
 
-func compileStartNode(n *StarNode) Nfa {
-	nfa := Nfa{}
-	start := &State{}
-	accept := &State{}
-	childNfa := Compile(n.Child)
+func compileStartNode(parentNfa *Nfa, n *StarNode) Nfa {
+	nfa := NewNfa(parentNfa.StatePrefix)
+	nfa.StateCount = parentNfa.StateCount
+	start := nfa.NewStart()
+	accept := nfa.NewAccept()
+	parentNfa.StateCount = nfa.StateCount
+	childNfa := compileNode(parentNfa, n.Child)
 	childStart := childNfa.Start
 	childAccept := childNfa.Accept
 	start.Epsilon = append(start.Epsilon, childStart)
-	start.Epsilon = append(start.Epsilon, childAccept)
+	start.Epsilon = append(start.Epsilon, accept)
 	childAccept.Epsilon = append(childAccept.Epsilon, accept)
 	childAccept.Epsilon = append(childAccept.Epsilon, childStart)
 	nfa.Start = start
@@ -54,11 +68,13 @@ func compileStartNode(n *StarNode) Nfa {
 	return nfa
 }
 
-func concat(n1 Nfa, n2 Nfa) Nfa {
-	nfa := Nfa{}
-	nfa.Start = n1.Start
-	nfa.Accept = n2.Accept
+func concat(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
+	nfa := NewNfa(parentNfa.StatePrefix)
+	nfa.StateCount = parentNfa.StateCount
+	nfa.AddStart(n1.Start)
+	nfa.AddAccept (n2.Accept)
 	n1.Accept.Transitions = n2.Start.Transitions
+	n1.Accept.Epsilon = n2.Start.Epsilon
 	n1.Accept = n2.Start
 	return nfa
 }
@@ -71,7 +87,8 @@ func Match(n Nfa, input string) bool {
 		for _,s := range states {
 			if targetStates, ok := s.Transitions[char]; ok {
 				for _,ts :=range targetStates {
-					nextStates = append(nextStates, ts)
+				  closureStates := closures(ts)	
+					nextStates = append(nextStates, closureStates...)
 				}
 			}
 		}

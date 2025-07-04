@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Node interface {
 	String() string
 }
@@ -13,7 +15,12 @@ type SequenceNode struct {
 }
 
 func (n *SequenceNode) String() string {
-	return ""
+	str := ""
+	str += fmt.Sprintln("SequenceNode, Children")
+	for i,child := range n.Children {
+		str += fmt.Sprintf("Child %d = %s\n", i, child.String())
+	}
+	return str
 }
 
 type LiteralNode struct {
@@ -21,7 +28,7 @@ type LiteralNode struct {
 }
 
 func (n* LiteralNode) String() string {
-	return ""
+	return string(n.Value)
 }
 
 type DotNode struct {
@@ -33,7 +40,10 @@ func (n *DotNode) String() string {
 }
 
 func (n *StarNode) String() string {
-  return "*"
+	str := ""
+	str += fmt.Sprintln("StarNode, Child")
+	str += n.Child.String()
+  return str
 }
 
 type NodeBuilder struct {
