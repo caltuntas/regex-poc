@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"slices"
 )
 
-var stateNumber int = 1
 func Compile(n Node) Nfa {
 	nfa := NewNfa("s")
-	return compileNode(&nfa,n)
+	return compileNode(&nfa, n)
 }
 
 func compileNode(nfa *Nfa, n Node) Nfa {
@@ -21,7 +21,7 @@ func compileNode(nfa *Nfa, n Node) Nfa {
 	case *DotNode:
 		return compileDotNode(nfa, n.(*DotNode))
 	default:
-		panic(fmt.Sprintf("Unknown node type %T",n))
+		panic(fmt.Sprintf("Unknown node type %T", n))
 	}
 }
 
@@ -60,9 +60,9 @@ func compileDotNode(parentNfa *Nfa, n *DotNode) Nfa {
 func compileSequenceNode(parentNfa *Nfa, n *SequenceNode) Nfa {
 	nfa := compileNode(parentNfa, n.Children[0])
 
-	for i:=1; i<len(n.Children); i++ {
+	for i := 1; i < len(n.Children); i++ {
 		childNfa := compileNode(parentNfa, n.Children[i])
-		nfa = concat(parentNfa,nfa, childNfa)
+		nfa = concat(parentNfa, nfa, childNfa)
 	}
 
 	return nfa
@@ -90,7 +90,7 @@ func concat(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
 	nfa := NewNfa(parentNfa.StatePrefix)
 	nfa.StateCount = parentNfa.StateCount
 	nfa.AddStart(n1.Start)
-	nfa.AddAccept (n2.Accept)
+	nfa.AddAccept(n2.Accept)
 	n1.Accept.Transitions = n2.Start.Transitions
 	n1.Accept.Epsilon = n2.Start.Epsilon
 	n1.Accept = n2.Start
@@ -99,10 +99,10 @@ func concat(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
 
 func Match(n Nfa, input string) bool {
 	states := closures(n.Start)
-	for i :=0; i<len(input); i++ {
+	for i := 0; i < len(input); i++ {
 		var nextStates []*State
 		char := input[i]
-		for _,s := range states {
+		for _, s := range states {
 			var targetStates []*State
 			charStates, keyFound := s.Transitions[char]
 			if keyFound {
@@ -113,27 +113,22 @@ func Match(n Nfa, input string) bool {
 					targetStates = dotStates
 				}
 			}
-				for _,ts :=range targetStates {
-				  closureStates := closures(ts)	
-					nextStates = append(nextStates, closureStates...)
-				}
+			for _, ts := range targetStates {
+				closureStates := closures(ts)
+				nextStates = append(nextStates, closureStates...)
+			}
 		}
 		states = nextStates
 	}
 
-	for _,s := range states {
-		if n.Accept == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(states, n.Accept)
 }
 
 func closures(n *State) []*State {
 	var states []*State
 	states = append(states, n)
 	for _, s := range n.Epsilon {
-    states = append(states, s)
+		states = append(states, s)
 	}
 	return states
 }
