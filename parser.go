@@ -48,7 +48,7 @@ func (p *Parser) parseTerm() Node {
 func (p *Parser) parseFactor() Node {
 	var node Node
 	if p.currentToken.Type == DOT {
-		node = &DotNode{}
+		node = &DotNode{Value: '.'}
 	}else if p.currentToken.Type== LITERAL {
 		node = &LiteralNode{Value: p.currentToken.Value[0]}
 	}

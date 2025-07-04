@@ -181,3 +181,64 @@ func TestSequenceWithStarToNFA(t *testing.T) {
 		t.Errorf("Expected ε-transition from mid to accept")
 	}
 }
+
+func TestSequenceWithDotStarToNFA(t *testing.T) {
+	ast := nb.Seq(
+			nb.Lit('a'),
+			nb.Star(nb.Dot()),
+	)
+
+	nfa := Compile(ast)
+	str := nfa.ToString()
+	fmt.Println(str)
+
+	if nfa.Start == nil || nfa.Accept == nil {
+		t.Fatal("Start or Accept state is nil")
+	}
+
+	start := nfa.Start
+	accept := nfa.Accept
+
+	aTargets := start.Transitions['a']
+	if len(aTargets) != 1 {
+		t.Fatalf("Expected 1 'a' transition from start, got %d", len(aTargets))
+	}
+	s2 := aTargets[0]
+
+
+	if len(s2.Epsilon) != 2 {
+		t.Fatalf("Expected 2 ε-transitions from s2 (entry of .*), got %d", len(s2.Epsilon))
+	}
+
+	var entryB *State
+	if s2.Epsilon[0] == accept {
+		entryB = s2.Epsilon[1]
+	} else if s2.Epsilon[1] == accept {
+		entryB = s2.Epsilon[0]
+	} else {
+		t.Fatalf("Expected one ε-transition from s2 to accept")
+	}
+
+	bTargets := entryB.Transitions['.']
+	if len(bTargets) != 1 {
+		t.Fatalf("Expected 1 '.' transition from entryB, got %d", len(bTargets))
+	}
+	mid := bTargets[0]
+
+	foundBack := false
+	foundExit := false
+	for _, eps := range mid.Epsilon {
+		if eps == entryB {
+			foundBack = true
+		}
+		if eps == accept {
+			foundExit = true
+		}
+	}
+	if !foundBack {
+		t.Errorf("Expected ε-transition from mid to entryB for looping")
+	}
+	if !foundExit {
+		t.Errorf("Expected ε-transition from mid to accept")
+	}
+}
