@@ -126,9 +126,17 @@ func Match(n Nfa, input string) bool {
 
 func closures(n *State) []*State {
 	var states []*State
-	states = append(states, n)
-	for _, s := range n.Epsilon {
-		states = append(states, s)
+  
+	var  findClosures func(childState *State)
+	findClosures = func(childState *State) {
+		if slices.Contains(states, childState) == false {
+			states = append(states, childState)
+		}
+		for _, epsilonState := range childState.Epsilon {
+			findClosures(epsilonState)
+		}
 	}
+
+	findClosures(n)
 	return states
 }

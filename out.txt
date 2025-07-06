@@ -1,0 +1,423 @@
+package main
+
+type TokenType string
+
+type Token struct {
+	Type TokenType
+	Value string
+}
+
+const (
+	LITERAL = "LITERAL"
+	STAR = "*"
+	DOT = "."
+	EOF = "EOF"
+)
+
+type Lexer struct {
+	input string
+	position int
+	readPosition int
+	ch byte
+}
+
+func New(pattern string) *Lexer {
+	l := &Lexer{input: pattern}
+	//l.readChar()
+	return l
+}
+
+func isLetter(chr byte) bool {
+	return chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z'
+}
+
+func (l *Lexer) NextChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	}
+	return l.input[l.readPosition]
+}
+func (l *Lexer) NextToken() Token {
+	var token Token
+
+	l.readChar()
+	if isLetter(l.ch) {
+		token.Type = LITERAL
+		token.Value = string(l.ch)
+	} else if l.ch == '.' {
+		token.Type = DOT
+		token.Value = string(l.ch)
+	} else if l.ch == '*' {
+		token.Type = STAR
+		token.Value = string(l.ch)
+	}
+
+	return token
+}
+
+func (l *Lexer) readChar() {
+	if l.readPosition >= len(l.input) {
+		l.ch = 0
+	} else {
+		l.ch = l.input[l.readPosition]
+	}
+	l.position = l.readPosition
+	l.readPosition++
+}
+
+func (l *Lexer) HasMore() bool {
+  return l.position < len(l.input)
+}
+package main
+
+import "fmt"
+
+type Node interface {
+	String() string
+}
+
+type StarNode struct {
+	Child Node
+}
+
+type SequenceNode struct {
+	Children []Node;
+}
+
+func (n *SequenceNode) String() string {
+	str := ""
+	str += fmt.Sprintln("SequenceNode, Children")
+	for i,child := range n.Children {
+		str += fmt.Sprintf("Child %d = %s\n", i, child.String())
+	}
+	return str
+}
+
+type LiteralNode struct {
+	Value byte
+}
+
+func (n* LiteralNode) String() string {
+	return string(n.Value)
+}
+
+type DotNode struct {
+	Value byte
+}
+
+func (n *DotNode) String() string {
+	return "."
+}
+
+func (n *StarNode) String() string {
+	str := ""
+	str += fmt.Sprintln("StarNode, Child")
+	str += n.Child.String()
+  return str
+}
+
+type NodeBuilder struct {
+}
+
+func (b NodeBuilder) Lit(c byte) *LiteralNode { return &LiteralNode{Value: c}}
+func (b NodeBuilder) Star(child Node) *StarNode { return &StarNode{Child: child}}
+func (b NodeBuilder) Dot() *DotNode { return &DotNode{Value: '.'}}
+func (b NodeBuilder) Seq(children ...Node) *SequenceNode { 
+	return &SequenceNode{ Children: children}
+}
+package main
+
+type Parser struct {
+	l *Lexer
+	currentToken Token
+	nextToken Token
+}
+
+func NewParser(l *Lexer) *Parser {
+	p := &Parser{l: l}
+	p.currentToken = l.NextToken()
+	return p
+}
+
+func (p *Parser) Ast() Node {
+	return p.parseExpression()
+}
+
+func (p *Parser) parseExpression() Node {
+	var node Node
+	sequence := &SequenceNode{}
+	node = sequence
+
+	for p.l.HasMore() {
+		term := p.parseTerm()
+
+		if term != nil {
+			sequence.Children = append(sequence.Children, term)
+		}
+	}
+	return node
+}
+
+func (p *Parser) parseTerm() Node {
+	factor := p.parseFactor()
+	if p.l.NextChar() == '*' {
+		p.readNextToken()
+		p.readNextToken()
+		star := &StarNode{}
+		star.Child = factor
+		return star
+	} 
+	p.readNextToken()
+	return factor
+	
+}
+
+func (p *Parser) parseFactor() Node {
+	var node Node
+	if p.currentToken.Type == DOT {
+		node = &DotNode{Value: '.'}
+	}else if p.currentToken.Type== LITERAL {
+		node = &LiteralNode{Value: p.currentToken.Value[0]}
+	}
+	return node
+}
+
+func (p *Parser) isNextToken(t TokenType) bool {
+	return p.nextToken.Type == t
+}
+
+func (p *Parser) readNextToken() {
+	//p.currentToken = p.nextToken
+	p.currentToken = p.l.NextToken()
+}
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+type Nfa struct {
+	Start  *State
+	Accept *State
+	StateCount int
+	StatePrefix string
+}
+
+type State struct {
+	Name        string
+	Transitions map[byte][]*State
+	Epsilon     []*State
+}
+
+func NewNfa(prefix string) Nfa {
+	nfa := Nfa{}
+	nfa.StatePrefix = prefix
+	nfa.StateCount++
+	return nfa
+}
+
+
+func (n *Nfa) NewStart() *State {
+	start := &State{}
+	start.Name = n.StatePrefix + strconv.Itoa(n.StateCount)
+	n.Start = start
+	n.StateCount++
+	return start
+}
+
+func (n* Nfa) AddStart(s *State) {
+	n.Start = s
+}
+
+func (n* Nfa) AddAccept(s *State) {
+	n.Accept = s
+}
+
+func (n *Nfa) NewAccept() *State {
+	accept := &State{}
+	accept.Name = n.StatePrefix + strconv.Itoa(n.StateCount)
+	n.Accept = accept
+	n.StateCount++
+	return accept
+}
+
+func (n *Nfa) ToString() string {
+	str := ""
+	str += n.Start.ToString()
+	return str
+}
+
+func stateToString(s *State, str *string, used map[string]bool) {
+	isUsed,ok := used[s.Name]
+	if ok && isUsed {
+		return 
+	}
+	used[s.Name] = true
+	for key, value := range s.Transitions {
+		for _, state := range value {
+			*str += fmt.Sprintf("%s --> %s, %s\n", s.Name, state.Name, string(key))
+			 stateToString(state,str, used)
+		}
+	}
+	for _, state := range s.Epsilon {
+		*str += fmt.Sprintf("%s --> %s, ε\n", s.Name, state.Name)
+		 stateToString(state,str, used)
+	}
+}
+
+func (s *State) ToString() string {
+	used := make(map[string]bool)
+	str :=""
+	 stateToString(s,&str,used)
+	return str
+}
+package main
+
+import (
+	"fmt"
+	"slices"
+)
+
+func Compile(n Node) Nfa {
+	nfa := NewNfa("s")
+	return compileNode(&nfa, n)
+}
+
+func compileNode(nfa *Nfa, n Node) Nfa {
+	switch n.(type) {
+	case *LiteralNode:
+		return compileLiteralNode(nfa, n.(*LiteralNode))
+	case *SequenceNode:
+		return compileSequenceNode(nfa, n.(*SequenceNode))
+	case *StarNode:
+		return compileStartNode(nfa, n.(*StarNode))
+	case *DotNode:
+		return compileDotNode(nfa, n.(*DotNode))
+	default:
+		panic(fmt.Sprintf("Unknown node type %T", n))
+	}
+}
+
+func compileLiteralNode(parentNfa *Nfa, n *LiteralNode) Nfa {
+	nfa := NewNfa(parentNfa.StatePrefix)
+	nfa.StateCount = parentNfa.StateCount
+	start := nfa.NewStart()
+	accept := nfa.NewAccept()
+
+	var transitions []*State
+	transitions = append(transitions, accept)
+	start.Transitions = make(map[byte][]*State)
+	start.Transitions[n.Value] = transitions
+	nfa.Start = start
+	nfa.Accept = accept
+	parentNfa.StateCount = nfa.StateCount
+	return nfa
+}
+
+func compileDotNode(parentNfa *Nfa, n *DotNode) Nfa {
+	nfa := NewNfa(parentNfa.StatePrefix)
+	nfa.StateCount = parentNfa.StateCount
+	start := nfa.NewStart()
+	accept := nfa.NewAccept()
+
+	var transitions []*State
+	transitions = append(transitions, accept)
+	start.Transitions = make(map[byte][]*State)
+	start.Transitions[n.Value] = transitions
+	nfa.Start = start
+	nfa.Accept = accept
+	parentNfa.StateCount = nfa.StateCount
+	return nfa
+}
+
+func compileSequenceNode(parentNfa *Nfa, n *SequenceNode) Nfa {
+	nfa := compileNode(parentNfa, n.Children[0])
+
+	for i := 1; i < len(n.Children); i++ {
+		childNfa := compileNode(parentNfa, n.Children[i])
+		nfa = concat(parentNfa, nfa, childNfa)
+	}
+
+	return nfa
+}
+
+func compileStartNode(parentNfa *Nfa, n *StarNode) Nfa {
+	nfa := NewNfa(parentNfa.StatePrefix)
+	nfa.StateCount = parentNfa.StateCount
+	start := nfa.NewStart()
+	accept := nfa.NewAccept()
+	parentNfa.StateCount = nfa.StateCount
+	childNfa := compileNode(parentNfa, n.Child)
+	childStart := childNfa.Start
+	childAccept := childNfa.Accept
+	start.Epsilon = append(start.Epsilon, childStart)
+	start.Epsilon = append(start.Epsilon, accept)
+	childAccept.Epsilon = append(childAccept.Epsilon, accept)
+	childAccept.Epsilon = append(childAccept.Epsilon, childStart)
+	nfa.Start = start
+	nfa.Accept = accept
+	return nfa
+}
+
+func concat(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
+	nfa := NewNfa(parentNfa.StatePrefix)
+	nfa.StateCount = parentNfa.StateCount
+	nfa.AddStart(n1.Start)
+	nfa.AddAccept(n2.Accept)
+	n1.Accept.Transitions = n2.Start.Transitions
+	n1.Accept.Epsilon = n2.Start.Epsilon
+	n1.Accept = n2.Start
+	return nfa
+}
+
+func Match(n Nfa, input string) bool {
+	states := closures(n.Start)
+	for i := 0; i < len(input); i++ {
+		var nextStates []*State
+		char := input[i]
+		for _, s := range states {
+			var targetStates []*State
+			charStates, keyFound := s.Transitions[char]
+			if keyFound {
+				targetStates = charStates
+			} else {
+				dotStates, dotFound := s.Transitions['.']
+				if dotFound {
+					targetStates = dotStates
+				}
+			}
+			for _, ts := range targetStates {
+				closureStates := closures(ts)
+				nextStates = append(nextStates, closureStates...)
+			}
+		}
+		states = nextStates
+	}
+
+	return slices.Contains(states, n.Accept)
+}
+
+func closures(n *State) []*State {
+	var states []*State
+	states = append(states, n)
+	for _, s := range n.Epsilon {
+		states = append(states, s)
+	}
+	return states
+}
+package main
+
+import "fmt"
+
+func lex(pattern string) {
+
+}
+
+func main() {
+	pattern := "parent.*type"
+	lex(pattern)
+
+
+	fmt.Println("hello world")
+}
