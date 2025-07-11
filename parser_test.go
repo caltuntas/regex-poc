@@ -37,6 +37,24 @@ func testDotNode(t *testing.T, actual *DotNode, expected Node) bool {
 	return true
 }
 
+func testCharListNode(t *testing.T, actual *CharList, expected Node) bool {
+	expectedCharList, ok := expected.(*CharList)
+	if !ok {
+		t.Error("expected node is not a CharList")
+		return false
+	}
+
+	for i:=0; i<len(actual.Chars); i++ {
+		expectedChar := expectedCharList.Chars[i]
+		actualChar := actual.Chars[i]
+		if actualChar != expectedChar{
+		  t.Errorf("CharList characters are different, expected %s, actual %s",string(expectedChar),string(actualChar))
+			return false
+		}
+	}
+	return true
+}
+
 func testNode(t *testing.T, actual Node, expected Node) bool {
 	var result bool
 	switch v := actual.(type) {
@@ -46,6 +64,8 @@ func testNode(t *testing.T, actual Node, expected Node) bool {
 		result = testStartNode(t, actual.(*StarNode), expected)
 	case *DotNode:
 		result = testDotNode(t, actual.(*DotNode), expected)
+	case *CharList:
+		result = testCharListNode(t, actual.(*CharList), expected)
 	default:
 		t.Fatalf("unknown type %T", v)
 	}
@@ -80,6 +100,23 @@ func TestParse(t *testing.T) {
 		b.Lit('t'),
 	);
 	l := New("pa.*t")
+	parser := NewParser(l)
+	node := parser.Ast()
+
+	ok := testSequenceNode(t, node.(*SequenceNode), expected)
+	if !ok {
+		t.Fatalf("expected SequenceNode, got %T", node)
+	}
+}
+
+func TestParsePatternWithCharList(t *testing.T) {
+	expected := b.Seq(
+		b.Lit('p'),
+		b.Lit('a'),
+		b.List('a','b'),
+		b.Lit('c'),
+	);
+	l := New("pa[ab]c")
 	parser := NewParser(l)
 	node := parser.Ast()
 

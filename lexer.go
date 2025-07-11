@@ -11,6 +11,8 @@ const (
 	LITERAL = "LITERAL"
 	STAR = "*"
 	DOT = "."
+	LBRACKET = "["
+	RBRACKET = "]"
 	EOF = "EOF"
 )
 
@@ -49,6 +51,12 @@ func (l *Lexer) NextToken() Token {
 		token.Value = string(l.ch)
 	} else if l.ch == '*' {
 		token.Type = STAR
+		token.Value = string(l.ch)
+	} else if l.ch == '[' {
+		token.Type = LBRACKET
+		token.Value = string(l.ch)
+	} else if l.ch == ']' {
+		token.Type = RBRACKET
 		token.Value = string(l.ch)
 	}
 

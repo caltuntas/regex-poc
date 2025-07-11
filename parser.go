@@ -51,6 +51,14 @@ func (p *Parser) parseFactor() Node {
 		node = &DotNode{Value: '.'}
 	}else if p.currentToken.Type== LITERAL {
 		node = &LiteralNode{Value: p.currentToken.Value[0]}
+	}else if p.currentToken.Type == LBRACKET {
+		p.readNextToken()
+		charList := &CharList{}
+		for p.currentToken.Type != RBRACKET {
+			charList.Chars = append(charList.Chars,p.currentToken.Value[0]) 
+			p.readNextToken()
+		}
+		return charList
 	}
 	return node
 }

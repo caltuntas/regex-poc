@@ -20,6 +20,8 @@ func compileNode(nfa *Nfa, n Node) Nfa {
 		return compileStartNode(nfa, n.(*StarNode))
 	case *DotNode:
 		return compileDotNode(nfa, n.(*DotNode))
+	case *CharList:
+		return compileCharList(nfa, n.(*CharList))
 	default:
 		panic(fmt.Sprintf("Unknown node type %T", n))
 	}
@@ -83,6 +85,33 @@ func compileStartNode(parentNfa *Nfa, n *StarNode) Nfa {
 	childAccept.Epsilon = append(childAccept.Epsilon, childStart)
 	nfa.Start = start
 	nfa.Accept = accept
+	return nfa
+}
+
+func compileCharList(parentNfa *Nfa, n *CharList) Nfa {
+	var charListNfa Nfa
+	for i:=0; i<len(n.Chars); i++ {
+		char := n.Chars[i]
+		ln := &LiteralNode{Value: char }
+		if charListNfa == (Nfa{}) {
+			charListNfa = compileLiteralNode(parentNfa, ln)
+		} else {
+			nfa := compileLiteralNode(parentNfa, ln)
+			charListNfa = union(parentNfa, charListNfa, nfa)
+		}
+	}
+	return charListNfa
+}
+
+func union(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
+	nfa := NewNfa(parentNfa.StatePrefix)
+	nfa.StateCount = parentNfa.StateCount
+	start := nfa.NewStart()
+  accept := nfa.NewAccept()
+	start.AddEpsilonTo(n1.Start)
+	start.AddEpsilonTo(n2.Start)
+	n1.Accept.AddEpsilonTo(accept)
+	n2.Accept.AddEpsilonTo(accept)
 	return nfa
 }
 

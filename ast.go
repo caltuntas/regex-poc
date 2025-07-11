@@ -46,6 +46,14 @@ func (n *StarNode) String() string {
   return str
 }
 
+type CharList struct {
+	Chars []byte
+}
+
+func (n *CharList) String() string {
+	return "charlist"
+}
+
 type NodeBuilder struct {
 }
 
@@ -54,4 +62,7 @@ func (b NodeBuilder) Star(child Node) *StarNode { return &StarNode{Child: child}
 func (b NodeBuilder) Dot() *DotNode { return &DotNode{Value: '.'}}
 func (b NodeBuilder) Seq(children ...Node) *SequenceNode { 
 	return &SequenceNode{ Children: children}
+}
+func (b NodeBuilder) List(chars ...byte) *CharList { 
+	return &CharList{ Chars: chars}
 }
