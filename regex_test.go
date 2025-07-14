@@ -144,77 +144,90 @@ var config = `parent {
 
 func TestRegexPerformance(t *testing.T) {
 	t.Skip()
-		l := New("pattern")
-		parser := NewParser(l)
-		ast := parser.Ast()
-		nfa := Compile(ast)
-			if got := Match(nfa, config); got != true {
-				t.Errorf("Match(%q) = %v, want %v", config, got, false)
-			}
+	l := New("pattern")
+	parser := NewParser(l)
+	ast := parser.Ast()
+	nfa := Compile(ast)
+	if got := Match(nfa, config); got != true {
+		t.Errorf("Match(%q) = %v, want %v", config, got, false)
+	}
 }
 
 func TestRegexMatch(t *testing.T) {
 	cases := map[string][]struct {
 		input string
 		match bool
-	} {
-	"aa.*": {
-		{"aac", true},
-		{"aab", true},
-		{"aabbcc", true},
-		{"aa", true},
-		{"aaabbb", true},
-		{"a", false},
-		{"ab", false},
-		{"abbbbb", false},
-		{"xabc", false},
-		{"abccd", false},
-	},
-	"ab*cd*": {
-		{"ac", true},           
-		{"abc", true},          
-		{"abbbbbc", true},      
-		{"acd", true},          
-		{"abbbbbcdddd", true},  
-		{"a", false},           
-		{"ab", false},          
-		{"abbbbb", false},      
-		{"xabc", false},        
-		{"abccd", false},       
-	},
-	"ab*": {
-		{"a", true},       
-		{"ab", true},      
-		{"abb", true},     
-		{"abbb", true},    
-		{"b", false},      
-		{"ba", false},     
-		{"", false},       
-		{"abbbbcd", false},
-		{"xab", false},    
-	},
-	"ab": {
-		{"ab", true},  
-		{"a", false},  
-		{"b", false},  
-		{"", false},   
-		{"abc", false},
-		{"xab", false},
-		{"abx", false},
-	},
-	"a.*b*": {
-		{"a", true},             
-		{"ab", true},            
-		{"a123", true},          
-		{"axxxbbbb", true},      
-		{"aBBBB", true},         
-		{"a.b", true},           
-		{"abbbbbb", true},       
-		{"b", false},            
-		{"x", false},            
-		{"", false},             
-	},
-}
+	}{
+		"aa.*": {
+			{"aac", true},
+			{"aab", true},
+			{"aabbcc", true},
+			{"aa", true},
+			{"aaabbb", true},
+			{"a", false},
+			{"ab", false},
+			{"abbbbb", false},
+			{"xabc", false},
+			{"abccd", false},
+		},
+		"ab*cd*": {
+			{"ac", true},
+			{"abc", true},
+			{"abbbbbc", true},
+			{"acd", true},
+			{"abbbbbcdddd", true},
+			{"a", false},
+			{"ab", false},
+			{"abbbbb", false},
+			{"xabc", false},
+			{"abccd", false},
+		},
+		"ab*": {
+			{"a", true},
+			{"ab", true},
+			{"abb", true},
+			{"abbb", true},
+			{"b", false},
+			{"ba", false},
+			{"", false},
+			{"abbbbcd", false},
+			{"xab", false},
+		},
+		"ab": {
+			{"ab", true},
+			{"a", false},
+			{"b", false},
+			{"", false},
+			{"abc", false},
+			{"xab", false},
+			{"abx", false},
+		},
+		"a.*b*": {
+			{"a", true},
+			{"ab", true},
+			{"a123", true},
+			{"axxxbbbb", true},
+			{"aBBBB", true},
+			{"a.b", true},
+			{"abbbbbb", true},
+			{"b", false},
+			{"x", false},
+			{"", false},
+		},
+		"a[bc]d": {
+			{"abd", true},
+			{"acd", true},
+			{"aad", false},
+			{"abcd", false},
+			{"abbd", false},
+			{"ad", false},
+			{"abd ", false},
+			{" abd", false},
+			{"Abd", false},
+			{"aCd", false},
+			{"", false},
+		},
+	}
 
 	for key, val := range cases {
 		l := New(key)
@@ -228,5 +241,3 @@ func TestRegexMatch(t *testing.T) {
 		}
 	}
 }
-
-
