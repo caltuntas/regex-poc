@@ -33,11 +33,7 @@ func compileLiteralNode(parentNfa *Nfa, n *LiteralNode) Nfa {
 	nfa.StateCount = parentNfa.StateCount
 	start := nfa.NewStart()
 	accept := nfa.NewAccept()
-
-	var transitions []*State
-	transitions = append(transitions, accept)
-	start.Transitions = make(map[string][]*State)
-	start.Transitions[string(n.Value)] = transitions
+	start.AddTransition(string(n.Value),accept)
 	nfa.Start = start
 	nfa.Accept = accept
 	parentNfa.StateCount = nfa.StateCount
@@ -49,11 +45,7 @@ func compileMetaCharacter(parentNfa *Nfa, n *MetaCharacterNode) Nfa {
 	nfa.StateCount = parentNfa.StateCount
 	start := nfa.NewStart()
 	accept := nfa.NewAccept()
-
-	var transitions []*State
-	transitions = append(transitions, accept)
-	start.Transitions = make(map[string][]*State)
-	start.Transitions[n.Value] = transitions
+	start.AddTransition(string(n.Value),accept)
 	nfa.Start = start
 	nfa.Accept = accept
 	parentNfa.StateCount = nfa.StateCount
@@ -149,9 +141,9 @@ func Match(n Nfa, input string) bool {
 		var nextStates []*State
 		for _, s := range states {
 			var targetStates []*State
-			for transitionKey,state := range s.Transitions {
-				if IsMatching(transitionKey,char) {
-					targetStates = append(targetStates, state...)
+			for _,t := range s.Transitions {
+				if IsMatching(t.Value,char) {
+					targetStates = append(targetStates,t.State)
 				}
 			}
 			for _, ts := range targetStates {

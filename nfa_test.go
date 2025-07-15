@@ -173,3 +173,16 @@ func TestDotLiteralToNFA(t *testing.T) {
 		t.Fatalf("NFA mismatch:\nGot:\n%s\nExpected:\n%s", actualEncoding, expectedEncoding)
 	}
 }
+
+func TestEncode(t *testing.T) {
+	ast := nb.Seq(
+		nb.Lit('p'),
+		nb.List('a', 'b'),
+	)
+	nfa := Compile(ast)
+	actualEncoding := nfa.Encode()
+	expectedEncoding := "(s-[LITERAL:p]->(s-[ε]->(s-[LITERAL:a]->(s-[ε]->)))(s-[ε]->(s-[LITERAL:b]->(s-[ε]-><back>))))"
+	if actualEncoding != expectedEncoding {
+		t.Fatalf("NFA mismatch:\nGot:\n%s\nExpected:\n%s", actualEncoding, expectedEncoding)
+	}
+}

@@ -2,10 +2,15 @@ package main
 
 import (
 	"fmt"
-	"maps"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
+)
+
+const (
+	META    = "META"
+	LITERAL = "LITERAL"
 )
 
 type Nfa struct {
@@ -15,11 +20,15 @@ type Nfa struct {
 	StatePrefix string
 }
 
+type Transition struct {
+	Type  string
+	Value string
+	State *State
+}
+
 type State struct {
 	Name        string
-	// TODO: Introduce a new struct for Transition
-	// map key is not enough for covering different regex constructs
-	Transitions map[string][]*State
+	Transitions []Transition
 	Epsilon     []*State
 }
 
@@ -31,10 +40,13 @@ func NewNfa(prefix string) Nfa {
 }
 
 func (s *State) AddTransition(key string, toState *State) {
-	var transitions []*State
-	transitions = append(transitions, toState)
-	s.Transitions = make(map[string][]*State)
-	s.Transitions[key] = transitions
+	transitionType := LITERAL
+	if key == "." || key == "\\s" {
+		transitionType = META
+	}
+	t := Transition{Type: transitionType, Value: key}
+	t.State = toState
+	s.Transitions = append(s.Transitions, t)
 }
 
 func (n *Nfa) NewState(name string) State {
@@ -53,31 +65,29 @@ func (n *Nfa) FindState(name string) *State {
 		if s.Name == name {
 			return s
 		}
-		for _, states := range s.Transitions {
-			for _, state := range states {
-				stateFound := findState(name, state)
-				if stateFound!=nil {
-					return stateFound
-				} 
+		for _, transition := range s.Transitions {
+			stateFound := findState(name, transition.State)
+			if stateFound != nil {
+				return stateFound
 			}
 		}
 		for _, state := range s.Epsilon {
 			stateFound := findState(name, state)
-			if stateFound!=nil {
+			if stateFound != nil {
 				return stateFound
-			} 
+			}
 		}
 		return nil
 	}
 
-	return findState(name,n.Start)
+	return findState(name, n.Start)
 }
 
 func CreateNfaFromString(str string) Nfa {
 	nfa := Nfa{}
-	lines := strings.Split(strings.TrimSpace(str),"\n")
+	lines := strings.Split(strings.TrimSpace(str), "\n")
 	for _, line := range lines {
-		parts := strings.Split(strings.TrimSpace(line),",")
+		parts := strings.Split(strings.TrimSpace(line), ",")
 		fromState := parts[0]
 		toState := parts[1]
 		transition := parts[2]
@@ -88,7 +98,7 @@ func CreateNfaFromString(str string) Nfa {
 			if transition == "ε" {
 				start.AddEpsilonTo(&to)
 			} else {
-				start.AddTransition(transition,&to)
+				start.AddTransition(transition, &to)
 			}
 		} else {
 			from := nfa.FindState(fromState)
@@ -97,7 +107,7 @@ func CreateNfaFromString(str string) Nfa {
 				if transition == "ε" {
 					from.AddEpsilonTo(&to)
 				} else {
-					from.AddTransition(transition,&to)
+					from.AddTransition(transition, &to)
 				}
 			}
 		}
@@ -157,18 +167,15 @@ func (s *State) Encode() string {
 
 		var parts []string
 
-		transitionKeys := slices.Collect(maps.Keys(s.Transitions))
-		slices.Sort(transitionKeys)
+		sort.Slice(s.Transitions, func(i, j int) bool {
+			return s.Transitions[i].Value < s.Transitions[j].Value
+		})
 
-		for _, key := range transitionKeys {
-			var encodings []string
-			for _, state := range s.Transitions[key] {
-				encodings = append(encodings, encode(state))
-			}
-			slices.Sort(encodings)
-			for _, child := range encodings {
-				parts = append(parts, fmt.Sprintf("(s-[%s]->%s)", string(key), child))
-			}
+		var encodings []string
+		for _, t := range s.Transitions {
+			encodedState := encode(t.State)
+			encodings = append(encodings, encodedState)
+			parts = append(parts, fmt.Sprintf("(s-[%s:%s]->%s)", t.Type, t.Value, encodedState))
 		}
 
 		var epsilonEncodings []string
@@ -192,11 +199,9 @@ func stateToString(s *State, str *string, used map[string]bool) {
 		return
 	}
 	used[s.Name] = true
-	for key, value := range s.Transitions {
-		for _, state := range value {
-			*str += fmt.Sprintf("%s --> %s, %s\n", s.Name, state.Name, string(key))
-			stateToString(state, str, used)
-		}
+	for _, t := range s.Transitions {
+		*str += fmt.Sprintf("%s --> %s, %s\n", s.Name, t.State.Name, t.Value)
+		stateToString(t.State, str, used)
 	}
 	for _, state := range s.Epsilon {
 		*str += fmt.Sprintf("%s --> %s, ε\n", s.Name, state.Name)

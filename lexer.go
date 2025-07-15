@@ -8,7 +8,6 @@ type Token struct {
 }
 
 const (
-	LITERAL = "LITERAL"
 	STAR = "*"
 	DOT = "."
 	LBRACKET = "["
