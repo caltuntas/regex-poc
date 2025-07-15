@@ -44,14 +44,6 @@ func (n* MetaCharacterNode) String() string {
 	return n.Value
 }
 
-type DotNode struct {
-	Value byte
-}
-
-func (n *DotNode) String() string {
-	return "."
-}
-
 func (n *StarNode) String() string {
 	str := ""
 	str += fmt.Sprintln("StarNode, Child")
@@ -72,7 +64,6 @@ type NodeBuilder struct {
 
 func (b NodeBuilder) Lit(c byte) *LiteralNode { return &LiteralNode{Value: c}}
 func (b NodeBuilder) Star(child Node) *StarNode { return &StarNode{Child: child}}
-func (b NodeBuilder) Dot() *DotNode { return &DotNode{Value: '.'}}
 func (b NodeBuilder) Seq(children ...Node) *SequenceNode { 
 	return &SequenceNode{ Children: children}
 }

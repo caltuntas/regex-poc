@@ -90,7 +90,7 @@ func TestSequenceWithStarToNFA(t *testing.T) {
 func TestSequenceWithDotStarToNFANew(t *testing.T) {
 	ast := nb.Seq(
 		nb.Lit('a'),
-		nb.Star(nb.Dot()),
+		nb.Star(nb.Meta(DOT)),
 	)
 
 	expected := `
@@ -160,7 +160,7 @@ func TestPatternWithCharListToNFA(t *testing.T) {
 }
 
 func TestDotLiteralToNFA(t *testing.T) {
-	ast := nb.Dot()
+	ast := nb.Meta(DOT)
 	expected := `
 		state1,state2,.
 	`

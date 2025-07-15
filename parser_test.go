@@ -42,15 +42,6 @@ func testStartNode(t *testing.T, actual *StarNode, expected Node) bool {
 	return testNode(t, actual.Child, expectedStar.Child)
 }
 
-func testDotNode(t *testing.T, actual *DotNode, expected Node) bool {
-	_, ok := expected.(*DotNode)
-	if !ok {
-		t.Error("expected node is not a DotNode")
-		return false
-	}
-	return true
-}
-
 func testCharListNode(t *testing.T, actual *CharList, expected Node) bool {
 	expectedCharList, ok := expected.(*CharList)
 	if !ok {
@@ -58,11 +49,11 @@ func testCharListNode(t *testing.T, actual *CharList, expected Node) bool {
 		return false
 	}
 
-	for i:=0; i<len(actual.Chars); i++ {
+	for i := 0; i < len(actual.Chars); i++ {
 		expectedChar := expectedCharList.Chars[i]
 		actualChar := actual.Chars[i]
-		if actualChar != expectedChar{
-		  t.Errorf("CharList characters are different, expected %s, actual %s",string(expectedChar),string(actualChar))
+		if actualChar != expectedChar {
+			t.Errorf("CharList characters are different, expected %s, actual %s", string(expectedChar), string(actualChar))
 			return false
 		}
 	}
@@ -76,8 +67,6 @@ func testNode(t *testing.T, actual Node, expected Node) bool {
 		result = testLiteralNode(t, actual.(*LiteralNode), expected)
 	case *StarNode:
 		result = testStartNode(t, actual.(*StarNode), expected)
-	case *DotNode:
-		result = testDotNode(t, actual.(*DotNode), expected)
 	case *CharList:
 		result = testCharListNode(t, actual.(*CharList), expected)
 	case *MetaCharacterNode:
@@ -108,13 +97,14 @@ func testSequenceNode(t *testing.T, actual *SequenceNode, expected *SequenceNode
 }
 
 var b NodeBuilder
+
 func TestParse(t *testing.T) {
 	expected := b.Seq(
 		b.Lit('p'),
 		b.Lit('a'),
-		b.Star(b.Dot()),
+		b.Star(b.Meta(DOT)),
 		b.Lit('t'),
-	);
+	)
 	l := New("pa.*t")
 	parser := NewParser(l)
 	node := parser.Ast()
@@ -129,9 +119,9 @@ func TestParsePatternWithCharList(t *testing.T) {
 	expected := b.Seq(
 		b.Lit('p'),
 		b.Lit('a'),
-		b.List('a','b'),
+		b.List('a', 'b'),
 		b.Lit('c'),
-	);
+	)
 	l := New("pa[ab]c")
 	parser := NewParser(l)
 	node := parser.Ast()
@@ -147,7 +137,7 @@ func TestParsePatternWithMetaCharacter(t *testing.T) {
 		b.Lit('p'),
 		b.Lit('a'),
 		b.Meta(WHITESPACE),
-	);
+	)
 	l := New("pa\\s")
 	parser := NewParser(l)
 	node := parser.Ast()

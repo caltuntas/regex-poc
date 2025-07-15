@@ -18,8 +18,6 @@ func compileNode(nfa *Nfa, n Node) Nfa {
 		return compileSequenceNode(nfa, n.(*SequenceNode))
 	case *StarNode:
 		return compileStartNode(nfa, n.(*StarNode))
-	case *DotNode:
-		return compileDotNode(nfa, n.(*DotNode))
 	case *CharList:
 		return compileCharList(nfa, n.(*CharList))
 	case *MetaCharacterNode:
@@ -30,22 +28,6 @@ func compileNode(nfa *Nfa, n Node) Nfa {
 }
 
 func compileLiteralNode(parentNfa *Nfa, n *LiteralNode) Nfa {
-	nfa := NewNfa(parentNfa.StatePrefix)
-	nfa.StateCount = parentNfa.StateCount
-	start := nfa.NewStart()
-	accept := nfa.NewAccept()
-
-	var transitions []*State
-	transitions = append(transitions, accept)
-	start.Transitions = make(map[string][]*State)
-	start.Transitions[string(n.Value)] = transitions
-	nfa.Start = start
-	nfa.Accept = accept
-	parentNfa.StateCount = nfa.StateCount
-	return nfa
-}
-
-func compileDotNode(parentNfa *Nfa, n *DotNode) Nfa {
 	nfa := NewNfa(parentNfa.StatePrefix)
 	nfa.StateCount = parentNfa.StateCount
 	start := nfa.NewStart()
