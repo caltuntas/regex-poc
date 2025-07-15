@@ -51,6 +51,11 @@ func (p *Parser) parseFactor() Node {
 		node = &DotNode{Value: '.'}
 	}else if p.currentToken.Type== LITERAL {
 		node = &LiteralNode{Value: p.currentToken.Value[0]}
+	}else if p.currentToken.Type == ESCAPE {
+		p.readNextToken()
+		if p.currentToken.Value == "s" {
+			return &MetaCharacterNode{Value: WHITESPACE}
+		}
 	}else if p.currentToken.Type == LBRACKET {
 		p.readNextToken()
 		charList := &CharList{}

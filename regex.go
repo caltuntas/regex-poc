@@ -22,6 +22,8 @@ func compileNode(nfa *Nfa, n Node) Nfa {
 		return compileDotNode(nfa, n.(*DotNode))
 	case *CharList:
 		return compileCharList(nfa, n.(*CharList))
+	case *MetaCharacterNode:
+		return compileMetaCharacter(nfa, n.(*MetaCharacterNode))
 	default:
 		panic(fmt.Sprintf("Unknown node type %T", n))
 	}
@@ -35,8 +37,8 @@ func compileLiteralNode(parentNfa *Nfa, n *LiteralNode) Nfa {
 
 	var transitions []*State
 	transitions = append(transitions, accept)
-	start.Transitions = make(map[byte][]*State)
-	start.Transitions[n.Value] = transitions
+	start.Transitions = make(map[string][]*State)
+	start.Transitions[string(n.Value)] = transitions
 	nfa.Start = start
 	nfa.Accept = accept
 	parentNfa.StateCount = nfa.StateCount
@@ -51,7 +53,23 @@ func compileDotNode(parentNfa *Nfa, n *DotNode) Nfa {
 
 	var transitions []*State
 	transitions = append(transitions, accept)
-	start.Transitions = make(map[byte][]*State)
+	start.Transitions = make(map[string][]*State)
+	start.Transitions[string(n.Value)] = transitions
+	nfa.Start = start
+	nfa.Accept = accept
+	parentNfa.StateCount = nfa.StateCount
+	return nfa
+}
+
+func compileMetaCharacter(parentNfa *Nfa, n *MetaCharacterNode) Nfa {
+	nfa := NewNfa(parentNfa.StatePrefix)
+	nfa.StateCount = parentNfa.StateCount
+	start := nfa.NewStart()
+	accept := nfa.NewAccept()
+
+	var transitions []*State
+	transitions = append(transitions, accept)
+	start.Transitions = make(map[string][]*State)
 	start.Transitions[n.Value] = transitions
 	nfa.Start = start
 	nfa.Accept = accept
@@ -133,11 +151,11 @@ func Match(n Nfa, input string) bool {
 		char := input[i]
 		for _, s := range states {
 			var targetStates []*State
-			charStates, keyFound := s.Transitions[char]
+			charStates, keyFound := s.Transitions[string(char)]
 			if keyFound {
 				targetStates = charStates
 			} else {
-				dotStates, dotFound := s.Transitions['.']
+				dotStates, dotFound := s.Transitions["."]
 				if dotFound {
 					targetStates = dotStates
 				}

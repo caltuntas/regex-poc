@@ -2,6 +2,11 @@ package main
 
 import "fmt"
 
+const (
+	WHITESPACE = "\\s"
+	NONWHITESPACE = "\\S"
+)
+
 type Node interface {
 	String() string
 }
@@ -29,6 +34,14 @@ type LiteralNode struct {
 
 func (n* LiteralNode) String() string {
 	return string(n.Value)
+}
+
+type MetaCharacterNode struct {
+	Value string
+}
+
+func (n* MetaCharacterNode) String() string {
+	return n.Value
 }
 
 type DotNode struct {
@@ -65,4 +78,8 @@ func (b NodeBuilder) Seq(children ...Node) *SequenceNode {
 }
 func (b NodeBuilder) List(chars ...byte) *CharList { 
 	return &CharList{ Chars: chars}
+}
+
+func (b NodeBuilder) Meta(s string) *MetaCharacterNode {
+	return &MetaCharacterNode{Value: s}
 }

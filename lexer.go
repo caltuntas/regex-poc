@@ -13,6 +13,7 @@ const (
 	DOT = "."
 	LBRACKET = "["
 	RBRACKET = "]"
+	ESCAPE = "\\"
 	EOF = "EOF"
 )
 
@@ -57,6 +58,9 @@ func (l *Lexer) NextToken() Token {
 		token.Value = string(l.ch)
 	} else if l.ch == ']' {
 		token.Type = RBRACKET
+		token.Value = string(l.ch)
+	} else if l.ch == '\\' {
+		token.Type = ESCAPE
 		token.Value = string(l.ch)
 	}
 

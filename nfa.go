@@ -17,7 +17,7 @@ type Nfa struct {
 
 type State struct {
 	Name        string
-	Transitions map[byte][]*State
+	Transitions map[string][]*State
 	Epsilon     []*State
 }
 
@@ -28,10 +28,10 @@ func NewNfa(prefix string) Nfa {
 	return nfa
 }
 
-func (s *State) AddTransition(key byte, toState *State) {
+func (s *State) AddTransition(key string, toState *State) {
 	var transitions []*State
 	transitions = append(transitions, toState)
-	s.Transitions = make(map[byte][]*State)
+	s.Transitions = make(map[string][]*State)
 	s.Transitions[key] = transitions
 }
 
@@ -86,7 +86,7 @@ func CreateNfaFromString(str string) Nfa {
 			if transition == "ε" {
 				start.AddEpsilonTo(&to)
 			} else {
-				start.AddTransition(transition[0],&to)
+				start.AddTransition(transition,&to)
 			}
 		} else {
 			from := nfa.FindState(fromState)
@@ -95,7 +95,7 @@ func CreateNfaFromString(str string) Nfa {
 				if transition == "ε" {
 					from.AddEpsilonTo(&to)
 				} else {
-					from.AddTransition(transition[0],&to)
+					from.AddTransition(transition,&to)
 				}
 			}
 		}

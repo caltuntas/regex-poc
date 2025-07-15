@@ -112,6 +112,27 @@ func TestSequenceWithDotStarToNFANew(t *testing.T) {
 	}
 }
 
+func TestSequenceWithMetaCharacterToNFA(t *testing.T) {
+	ast := nb.Seq(
+		nb.Lit('a'),
+		nb.Meta(WHITESPACE),
+	)
+
+	expected := `
+		state1,state2,a
+		state2,state3,\s
+	`
+
+	nfa := Compile(ast)
+	actualEncoding := nfa.Encode()
+	expectedNfa := CreateNfaFromString(expected)
+	expectedEncoding := expectedNfa.Encode()
+
+	if actualEncoding != expectedEncoding {
+		t.Fatalf("NFA mismatch:\nGot:\n%s\nExpected:\n%s", actualEncoding, expectedEncoding)
+	}
+}
+
 func TestPatternWithCharListToNFA(t *testing.T) {
 	ast := nb.Seq(
 		nb.Lit('p'),

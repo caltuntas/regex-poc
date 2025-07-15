@@ -18,6 +18,20 @@ func testLiteralNode(t *testing.T, actual *LiteralNode, expected Node) bool {
 	return true
 }
 
+func testMetaCharacter(t *testing.T, actual *MetaCharacterNode, expected Node) bool {
+	expectedLiteral, ok := expected.(*MetaCharacterNode)
+	if !ok {
+		t.Error("expected node is not a LiteralNode")
+		return false
+	}
+
+	if expectedLiteral.Value != actual.Value {
+		t.Errorf("LiteralNode values are different, expected=%s, actual=%s", expectedLiteral.Value, actual.Value)
+		return false
+	}
+	return true
+}
+
 func testStartNode(t *testing.T, actual *StarNode, expected Node) bool {
 	expectedStar, ok := expected.(*StarNode)
 	if !ok {
@@ -66,6 +80,8 @@ func testNode(t *testing.T, actual Node, expected Node) bool {
 		result = testDotNode(t, actual.(*DotNode), expected)
 	case *CharList:
 		result = testCharListNode(t, actual.(*CharList), expected)
+	case *MetaCharacterNode:
+		result = testMetaCharacter(t, actual.(*MetaCharacterNode), expected)
 	default:
 		t.Fatalf("unknown type %T", v)
 	}
@@ -117,6 +133,22 @@ func TestParsePatternWithCharList(t *testing.T) {
 		b.Lit('c'),
 	);
 	l := New("pa[ab]c")
+	parser := NewParser(l)
+	node := parser.Ast()
+
+	ok := testSequenceNode(t, node.(*SequenceNode), expected)
+	if !ok {
+		t.Fatalf("expected SequenceNode, got %T", node)
+	}
+}
+
+func TestParsePatternWithMetaCharacter(t *testing.T) {
+	expected := b.Seq(
+		b.Lit('p'),
+		b.Lit('a'),
+		b.Meta(WHITESPACE),
+	);
+	l := New("pa\\s")
 	parser := NewParser(l)
 	node := parser.Ast()
 
