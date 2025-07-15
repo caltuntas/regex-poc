@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -165,6 +166,38 @@ func TestDotLiteralToNFA(t *testing.T) {
 		state1,state2,.
 	`
 	nfa := Compile(ast)
+	actualEncoding := nfa.Encode()
+	expectedNfa := CreateNfaFromString(expected)
+	expectedEncoding := expectedNfa.Encode()
+
+	if actualEncoding != expectedEncoding {
+		t.Fatalf("NFA mismatch:\nGot:\n%s\nExpected:\n%s", actualEncoding, expectedEncoding)
+	}
+}
+
+func TestStarWithCharsetToNFA(t *testing.T) {
+	ast := nb.Seq(
+		nb.Lit('a'),
+		nb.Star(nb.List('b', 'c')),
+		nb.Lit('d'),
+	)
+	expected := `
+state1,state2,a
+state2,state9,ε
+state9,state5,ε
+state5,state6,b
+state6,state10,ε
+state10,state4,ε
+state4,state10,d
+state10,state9,ε
+state9,state7,ε
+state7,state8,c
+state8,state10,ε
+state2,state4,ε
+	`
+	nfa := Compile(ast)
+	str := nfa.ToString()
+	fmt.Print(str)
 	actualEncoding := nfa.Encode()
 	expectedNfa := CreateNfaFromString(expected)
 	expectedEncoding := expectedNfa.Encode()

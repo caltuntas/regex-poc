@@ -242,6 +242,23 @@ func TestRegexMatch(t *testing.T) {
 			{"p a b", false},     
 			{"", false},          
 		},
+		"a[bc]*d": {
+			{"ad", true},           
+			{"abd", true},          
+			{"acd", true},          
+			{"abcd", true},         
+			{"abcbcd", true},       
+			{"abccbd", true},       
+			{"a", false},           
+			{"d", false},           
+			{"abxd", false},        
+			{"axcd", false},        
+			{"ab cd", false},       
+			{"abcbcbcbcd", true},   
+			{"abcbdx", false},      
+			{"abccd", true},        
+			{"", false},            
+		},
 	}
 
 	for key, val := range cases {
