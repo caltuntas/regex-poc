@@ -17,6 +17,8 @@ type Nfa struct {
 
 type State struct {
 	Name        string
+	// TODO: Introduce a new struct for Transition
+	// map key is not enough for covering different regex constructs
 	Transitions map[string][]*State
 	Epsilon     []*State
 }

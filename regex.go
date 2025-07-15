@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"slices"
+	"unicode"
 )
 
 func Compile(n Node) Nfa {
@@ -126,20 +127,31 @@ func concat(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
 	return nfa
 }
 
+
+func IsMatching(stateKey string, char rune) bool {
+	if stateKey == string(char) {
+		return true
+	}
+	if stateKey == DOT {
+		return true
+	}
+	if stateKey == WHITESPACE {
+		if unicode.IsSpace(char) {
+			return true
+		}
+	}
+	return false
+}
+
 func Match(n Nfa, input string) bool {
 	states := closures(n.Start)
-	for i := 0; i < len(input); i++ {
+	for _,char := range input {
 		var nextStates []*State
-		char := input[i]
 		for _, s := range states {
 			var targetStates []*State
-			charStates, keyFound := s.Transitions[string(char)]
-			if keyFound {
-				targetStates = charStates
-			} else {
-				dotStates, dotFound := s.Transitions["."]
-				if dotFound {
-					targetStates = dotStates
+			for transitionKey,state := range s.Transitions {
+				if IsMatching(transitionKey,char) {
+					targetStates = append(targetStates, state...)
 				}
 			}
 			for _, ts := range targetStates {
