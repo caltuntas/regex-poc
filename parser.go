@@ -21,10 +21,8 @@ func (p *Parser) parseExpression() Node {
 	var node Node
 	sequence := &SequenceNode{}
 	node = sequence
-
 	for p.currentToken.Type != EOF {
 		term := p.parseTerm()
-
 		if term != nil {
 			sequence.Children = append(sequence.Children, term)
 		}
@@ -37,26 +35,27 @@ func (p *Parser) parseTerm() Node {
 	if p.nextToken.Type == STAR {
 		star := &StarNode{}
 		star.Child = factor
-		factor = star
 		p.readNextToken()
+		p.readNextToken()
+		return star
 	}
 	p.readNextToken()
 	return factor
-
 }
 
 func (p *Parser) parseFactor() Node {
 	var node Node
-	if p.currentToken.Type == DOT {
+	switch p.currentToken.Type {
+	case DOT:
 		node = &MetaCharacterNode{Value: "."}
-	} else if p.currentToken.Type == LITERAL {
+	case LITERAL:
 		node = &LiteralNode{Value: p.currentToken.Value[0]}
-	} else if p.currentToken.Type == ESCAPE {
+	case ESCAPE:
 		p.readNextToken()
 		if p.currentToken.Value == "s" {
 			return &MetaCharacterNode{Value: WHITESPACE}
 		}
-	} else if p.currentToken.Type == LBRACKET {
+	case LBRACKET:
 		p.readNextToken()
 		charList := &CharList{}
 		for p.currentToken.Type != RBRACKET {
