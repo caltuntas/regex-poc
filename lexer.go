@@ -3,24 +3,24 @@ package main
 type TokenType string
 
 type Token struct {
-	Type TokenType
+	Type  TokenType
 	Value string
 }
 
 const (
-	STAR = "*"
-	DOT = "."
+	STAR     = "*"
+	DOT      = "."
 	LBRACKET = "["
 	RBRACKET = "]"
-	ESCAPE = "\\"
-	EOF = "EOF"
+	ESCAPE   = "\\"
+	EOF      = "EOF"
 )
 
 type Lexer struct {
-	input string
-	position int
+	input        string
+	position     int
 	readPosition int
-	ch byte
+	ch           byte
 }
 
 func New(pattern string) *Lexer {
@@ -33,17 +33,20 @@ func isLetter(chr byte) bool {
 	return chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z'
 }
 
-func (l *Lexer) NextChar() byte {
+func (l *Lexer) PeekChar() byte {
 	if l.readPosition >= len(l.input) {
 		return 0
 	}
 	return l.input[l.readPosition]
 }
+
 func (l *Lexer) NextToken() Token {
 	var token Token
-
 	l.readChar()
-	if isLetter(l.ch) {
+	if l.ch == 0 {
+		token.Type = EOF
+		token.Value = ""
+	} else if isLetter(l.ch) {
 		token.Type = LITERAL
 		token.Value = string(l.ch)
 	} else if l.ch == '.' {
@@ -74,8 +77,4 @@ func (l *Lexer) readChar() {
 	}
 	l.position = l.readPosition
 	l.readPosition++
-}
-
-func (l *Lexer) HasMore() bool {
-  return l.position < len(l.input)
 }

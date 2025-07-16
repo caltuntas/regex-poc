@@ -8,7 +8,8 @@ type Parser struct {
 
 func NewParser(l *Lexer) *Parser {
 	p := &Parser{l: l}
-	p.currentToken = l.NextToken()
+	p.readNextToken()
+	p.readNextToken()
 	return p
 }
 
@@ -21,7 +22,7 @@ func (p *Parser) parseExpression() Node {
 	sequence := &SequenceNode{}
 	node = sequence
 
-	for p.l.HasMore() {
+	for p.currentToken.Type != EOF {
 		term := p.parseTerm()
 
 		if term != nil {
@@ -33,12 +34,11 @@ func (p *Parser) parseExpression() Node {
 
 func (p *Parser) parseTerm() Node {
 	factor := p.parseFactor()
-	if p.l.NextChar() == '*' {
-		p.readNextToken()
-		p.readNextToken()
+	if p.nextToken.Type == STAR {
 		star := &StarNode{}
 		star.Child = factor
-		return star
+		factor = star
+		p.readNextToken()
 	}
 	p.readNextToken()
 	return factor
@@ -69,11 +69,7 @@ func (p *Parser) parseFactor() Node {
 	return node
 }
 
-func (p *Parser) isNextToken(t TokenType) bool {
-	return p.nextToken.Type == t
-}
-
 func (p *Parser) readNextToken() {
-	//p.currentToken = p.nextToken
-	p.currentToken = p.l.NextToken()
+	p.currentToken = p.nextToken
+	p.nextToken = p.l.NextToken()
 }
