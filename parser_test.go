@@ -71,6 +71,8 @@ func testNode(t *testing.T, actual Node, expected Node) bool {
 		result = testCharListNode(t, actual.(*CharList), expected)
 	case *MetaCharacterNode:
 		result = testMetaCharacter(t, actual.(*MetaCharacterNode), expected)
+	case *SequenceNode:
+		result = testSequenceNode(t, actual.(*SequenceNode), expected)
 	default:
 		t.Fatalf("unknown type %T", v)
 	}
@@ -81,7 +83,12 @@ func testNode(t *testing.T, actual Node, expected Node) bool {
 	return true
 }
 
-func testSequenceNode(t *testing.T, actual *SequenceNode, expected *SequenceNode) bool {
+func testSequenceNode(t *testing.T, actual *SequenceNode, expectedNode Node) bool {
+	expected, ok := expectedNode.(*SequenceNode)
+	if !ok {
+		t.Error("expected node is not a StarNode")
+		return false
+	}
 	if len(actual.Children) != len(expected.Children) {
 		t.Fatalf("expected %d children in SequenceNode, got %d", len(expected.Children), len(actual.Children))
 		return false
@@ -98,84 +105,44 @@ func testSequenceNode(t *testing.T, actual *SequenceNode, expected *SequenceNode
 
 var b NodeBuilder
 
-func TestParse(t *testing.T) {
-	expected := b.Seq(
-		b.Lit('p'),
-		b.Lit('a'),
-		b.Star(b.Meta(DOT)),
-		b.Lit('t'),
-	)
-	l := New("pa.*t")
-	parser := NewParser(l)
-	node := parser.Ast()
-
-	ok := testSequenceNode(t, node.(*SequenceNode), expected)
-	if !ok {
-		t.Fatalf("expected SequenceNode, got %T", node)
-	}
-}
-
-func TestParsePatternWithCharList(t *testing.T) {
-	expected := b.Seq(
-		b.Lit('p'),
-		b.Lit('a'),
-		b.List(b.Lit('a'),b.Lit('b')),
-		b.Lit('c'),
-	)
-	l := New("pa[ab]c")
-	parser := NewParser(l)
-	node := parser.Ast()
-
-	ok := testSequenceNode(t, node.(*SequenceNode), expected)
-	if !ok {
-		t.Fatalf("expected SequenceNode, got %T", node)
-	}
-}
-
-func TestParsePatternWithMetaCharacter(t *testing.T) {
-	expected := b.Seq(
-		b.Lit('p'),
-		b.Lit('a'),
-		b.Meta(WHITESPACE),
-	)
-	l := New("pa\\s")
-	parser := NewParser(l)
-	node := parser.Ast()
-
-	ok := testSequenceNode(t, node.(*SequenceNode), expected)
-	if !ok {
-		t.Fatalf("expected SequenceNode, got %T", node)
-	}
-}
-
-func TestParseMetaCharacterInCharList(t *testing.T) {
-	expected := b.Seq(
-		b.Lit('p'),
-		b.List(b.Meta(WHITESPACE),b.Lit('b')),
-		b.Lit('c'),
-	)
-	l := New("p[\\sb]c")
-	parser := NewParser(l)
-	node := parser.Ast()
-
-	ok := testSequenceNode(t, node.(*SequenceNode), expected)
-	if !ok {
-		t.Fatalf("expected SequenceNode, got %T", node)
-	}
-}
-
 func TestParseCharListWithStar(t *testing.T) {
-	expected := b.Seq(
-		b.Lit('p'),
-		b.Star(b.List(b.Lit('a'),b.Lit('b'))),
-		b.Lit('c'),
-	)
-	l := New("p[ab]*c")
-	parser := NewParser(l)
-	node := parser.Ast()
-
-	ok := testSequenceNode(t, node.(*SequenceNode), expected)
-	if !ok {
-		t.Fatalf("expected SequenceNode, got %T", node)
+	cases := map[string]Node{
+		"p[ab]*c": b.Seq(
+			b.Lit('p'),
+			b.Star(b.List(b.Lit('a'), b.Lit('b'))),
+			b.Lit('c'),
+		),
+		"p[\\sb]c": b.Seq(
+			b.Lit('p'),
+			b.List(b.Meta(WHITESPACE), b.Lit('b')),
+			b.Lit('c'),
+		),
+		"pa\\s": b.Seq(
+			b.Lit('p'),
+			b.Lit('a'),
+			b.Meta(WHITESPACE),
+		),
+		"pa[ab]c": b.Seq(
+			b.Lit('p'),
+			b.Lit('a'),
+			b.List(b.Lit('a'), b.Lit('b')),
+			b.Lit('c'),
+		),
+		"pa.*t": b.Seq(
+			b.Lit('p'),
+			b.Lit('a'),
+			b.Star(b.Meta(DOT)),
+			b.Lit('t'),
+		),
 	}
+	for key, val := range cases {
+		l := New(key)
+		parser := NewParser(l)
+		node := parser.Ast()
+		ok := testNode(t, node.(*SequenceNode), val)
+		if !ok {
+			t.Fatalf("expected SequenceNode, got %T", node)
+		}
+	}
+
 }
