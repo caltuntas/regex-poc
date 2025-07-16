@@ -28,12 +28,21 @@ func (n *SequenceNode) String() string {
 	return str
 }
 
+type CharacterNode interface {
+	GetValue() string
+	String() string
+}
+
 type LiteralNode struct {
 	Value byte
 }
 
 func (n* LiteralNode) String() string {
 	return string(n.Value)
+}
+
+func (n* LiteralNode) GetValue() string {
+	return n.String()
 }
 
 type MetaCharacterNode struct {
@@ -44,6 +53,10 @@ func (n* MetaCharacterNode) String() string {
 	return n.Value
 }
 
+func (n* MetaCharacterNode) GetValue() string {
+	return n.String()
+}
+
 func (n *StarNode) String() string {
 	str := ""
 	str += fmt.Sprintln("StarNode, Child")
@@ -52,7 +65,7 @@ func (n *StarNode) String() string {
 }
 
 type CharList struct {
-	Chars []byte
+	Chars []CharacterNode
 }
 
 func (n *CharList) String() string {
@@ -67,7 +80,7 @@ func (b NodeBuilder) Star(child Node) *StarNode { return &StarNode{Child: child}
 func (b NodeBuilder) Seq(children ...Node) *SequenceNode { 
 	return &SequenceNode{ Children: children}
 }
-func (b NodeBuilder) List(chars ...byte) *CharList { 
+func (b NodeBuilder) List(chars ...CharacterNode) *CharList { 
 	return &CharList{ Chars: chars}
 }
 

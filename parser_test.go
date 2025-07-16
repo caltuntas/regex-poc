@@ -52,8 +52,8 @@ func testCharListNode(t *testing.T, actual *CharList, expected Node) bool {
 	for i := 0; i < len(actual.Chars); i++ {
 		expectedChar := expectedCharList.Chars[i]
 		actualChar := actual.Chars[i]
-		if actualChar != expectedChar {
-			t.Errorf("CharList characters are different, expected %s, actual %s", string(expectedChar), string(actualChar))
+		if testNode(t, actualChar, expectedChar) == false {
+			t.Errorf("CharList characters are different, expected %s, actual %s", expectedChar.String(), actualChar.String())
 			return false
 		}
 	}
@@ -119,7 +119,7 @@ func TestParsePatternWithCharList(t *testing.T) {
 	expected := b.Seq(
 		b.Lit('p'),
 		b.Lit('a'),
-		b.List('a', 'b'),
+		b.List(b.Lit('a'),b.Lit('b')),
 		b.Lit('c'),
 	)
 	l := New("pa[ab]c")
@@ -139,6 +139,38 @@ func TestParsePatternWithMetaCharacter(t *testing.T) {
 		b.Meta(WHITESPACE),
 	)
 	l := New("pa\\s")
+	parser := NewParser(l)
+	node := parser.Ast()
+
+	ok := testSequenceNode(t, node.(*SequenceNode), expected)
+	if !ok {
+		t.Fatalf("expected SequenceNode, got %T", node)
+	}
+}
+
+func TestParseMetaCharacterInCharList(t *testing.T) {
+	expected := b.Seq(
+		b.Lit('p'),
+		b.List(b.Meta(WHITESPACE),b.Lit('b')),
+		b.Lit('c'),
+	)
+	l := New("p[\\sb]c")
+	parser := NewParser(l)
+	node := parser.Ast()
+
+	ok := testSequenceNode(t, node.(*SequenceNode), expected)
+	if !ok {
+		t.Fatalf("expected SequenceNode, got %T", node)
+	}
+}
+
+func TestParseCharListWithStar(t *testing.T) {
+	expected := b.Seq(
+		b.Lit('p'),
+		b.Star(b.List(b.Lit('a'),b.Lit('b'))),
+		b.Lit('c'),
+	)
+	l := New("p[ab]*c")
 	parser := NewParser(l)
 	node := parser.Ast()
 

@@ -1,9 +1,9 @@
 package main
 
 type Parser struct {
-	l *Lexer
+	l            *Lexer
 	currentToken Token
-	nextToken Token
+	nextToken    Token
 }
 
 func NewParser(l *Lexer) *Parser {
@@ -39,28 +39,29 @@ func (p *Parser) parseTerm() Node {
 		star := &StarNode{}
 		star.Child = factor
 		return star
-	} 
+	}
 	p.readNextToken()
 	return factor
-	
+
 }
 
 func (p *Parser) parseFactor() Node {
 	var node Node
 	if p.currentToken.Type == DOT {
 		node = &MetaCharacterNode{Value: "."}
-	}else if p.currentToken.Type== LITERAL {
+	} else if p.currentToken.Type == LITERAL {
 		node = &LiteralNode{Value: p.currentToken.Value[0]}
-	}else if p.currentToken.Type == ESCAPE {
+	} else if p.currentToken.Type == ESCAPE {
 		p.readNextToken()
 		if p.currentToken.Value == "s" {
 			return &MetaCharacterNode{Value: WHITESPACE}
 		}
-	}else if p.currentToken.Type == LBRACKET {
+	} else if p.currentToken.Type == LBRACKET {
 		p.readNextToken()
 		charList := &CharList{}
 		for p.currentToken.Type != RBRACKET {
-			charList.Chars = append(charList.Chars,p.currentToken.Value[0]) 
+			char := p.parseFactor()
+			charList.Chars = append(charList.Chars, char.(CharacterNode))
 			p.readNextToken()
 		}
 		return charList

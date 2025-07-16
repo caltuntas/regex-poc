@@ -137,7 +137,7 @@ func TestSequenceWithMetaCharacterToNFA(t *testing.T) {
 func TestPatternWithCharListToNFA(t *testing.T) {
 	ast := nb.Seq(
 		nb.Lit('p'),
-		nb.List('a', 'b'),
+		nb.List(nb.Lit('a'), nb.Lit('b')),
 	)
 
 	expected := `
@@ -178,7 +178,7 @@ func TestDotLiteralToNFA(t *testing.T) {
 func TestStarWithCharsetToNFA(t *testing.T) {
 	ast := nb.Seq(
 		nb.Lit('a'),
-		nb.Star(nb.List('b', 'c')),
+		nb.Star(nb.List(nb.Lit('b'),nb.Lit('c'))),
 		nb.Lit('d'),
 	)
 	expected := `
@@ -210,7 +210,7 @@ state2,state4,ε
 func TestEncode(t *testing.T) {
 	ast := nb.Seq(
 		nb.Lit('p'),
-		nb.List('a', 'b'),
+		nb.List(nb.Lit('a'),nb.Lit('b')),
 	)
 	nfa := Compile(ast)
 	actualEncoding := nfa.Encode()

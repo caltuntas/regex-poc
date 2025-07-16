@@ -83,13 +83,11 @@ func compileStartNode(parentNfa *Nfa, n *StarNode) Nfa {
 
 func compileCharList(parentNfa *Nfa, n *CharList) Nfa {
 	var charListNfa Nfa
-	for i:=0; i<len(n.Chars); i++ {
-		char := n.Chars[i]
-		ln := &LiteralNode{Value: char }
+	for _, node := range n.Chars {
 		if charListNfa == (Nfa{}) {
-			charListNfa = compileLiteralNode(parentNfa, ln)
+			charListNfa = compileNode(parentNfa,node)
 		} else {
-			nfa := compileLiteralNode(parentNfa, ln)
+			nfa := compileNode(parentNfa, node)
 			charListNfa = union(parentNfa, charListNfa, nfa)
 		}
 	}
