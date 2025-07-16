@@ -12,17 +12,17 @@ func Compile(n Node) Nfa {
 }
 
 func compileNode(nfa *Nfa, n Node) Nfa {
-	switch n.(type) {
+	switch n:=n.(type) {
 	case *LiteralNode:
-		return compileLiteralNode(nfa, n.(*LiteralNode))
+		return compileLiteralNode(nfa, n)
 	case *SequenceNode:
-		return compileSequenceNode(nfa, n.(*SequenceNode))
+		return compileSequenceNode(nfa, n)
 	case *StarNode:
-		return compileStartNode(nfa, n.(*StarNode))
+		return compileStartNode(nfa, n)
 	case *CharList:
-		return compileCharList(nfa, n.(*CharList))
+		return compileCharList(nfa, n)
 	case *MetaCharacterNode:
-		return compileMetaCharacter(nfa, n.(*MetaCharacterNode))
+		return compileMetaCharacter(nfa, n)
 	default:
 		panic(fmt.Sprintf("Unknown node type %T", n))
 	}
@@ -54,12 +54,10 @@ func compileMetaCharacter(parentNfa *Nfa, n *MetaCharacterNode) Nfa {
 
 func compileSequenceNode(parentNfa *Nfa, n *SequenceNode) Nfa {
 	nfa := compileNode(parentNfa, n.Children[0])
-
 	for i := 1; i < len(n.Children); i++ {
 		childNfa := compileNode(parentNfa, n.Children[i])
 		nfa = concat(parentNfa, nfa, childNfa)
 	}
-
 	return nfa
 }
 
