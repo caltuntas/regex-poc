@@ -214,7 +214,7 @@ func TestEncode(t *testing.T) {
 	)
 	nfa := Compile(ast)
 	actualEncoding := nfa.Encode()
-	expectedEncoding := "(s-[LITERAL:p]->(s-[ε]->(s-[LITERAL:a]->(s-[ε]->)))(s-[ε]->(s-[LITERAL:b]->(s-[ε]-><back>))))"
+	expectedEncoding := "(s-[Literal:p]->(s-[ε]->(s-[Literal:a]->(s-[ε]->)))(s-[ε]->(s-[Literal:b]->(s-[ε]-><back>))))"
 	if actualEncoding != expectedEncoding {
 		t.Fatalf("NFA mismatch:\nGot:\n%s\nExpected:\n%s", actualEncoding, expectedEncoding)
 	}

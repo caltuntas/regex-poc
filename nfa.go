@@ -20,8 +20,19 @@ type Nfa struct {
 	StatePrefix string
 }
 
+type TransitionType int
+
+const (
+	Literal TransitionType = iota
+	Meta 
+)
+
+func (me TransitionType) String() string {
+    return [...]string{"Literal", "Meta"}[me]
+}
+
 type Transition struct {
-	Type  string
+	Type  TransitionType
 	Value string
 	State *State
 }
@@ -36,15 +47,13 @@ func NewNfa(prefix string) Nfa {
 	nfa := Nfa{}
 	nfa.StatePrefix = prefix
 	nfa.StateCount++
+	nfa.NewStart()
+	nfa.NewAccept()
 	return nfa
 }
 
-func (s *State) AddTransition(key string, toState *State) {
-	transitionType := LITERAL
-	if key == "." || key == "\\s" {
-		transitionType = META
-	}
-	t := Transition{Type: transitionType, Value: key}
+func (s *State) AddTransition(kind TransitionType, condition string, toState *State) {
+	t := Transition{Type: kind, Value: condition}
 	t.State = toState
 	s.Transitions = append(s.Transitions, t)
 }
@@ -83,6 +92,13 @@ func (n *Nfa) FindState(name string) *State {
 	return findState(name, n.Start)
 }
 
+func getTransitionType(str string) TransitionType {
+	if str==DOT || str==WHITESPACE {
+		return Meta
+	}
+	return Literal
+}
+
 func CreateNfaFromString(str string) Nfa {
 	nfa := Nfa{}
 	lines := strings.Split(strings.TrimSpace(str), "\n")
@@ -98,7 +114,7 @@ func CreateNfaFromString(str string) Nfa {
 			if transition == "ε" {
 				start.AddEpsilonTo(&to)
 			} else {
-				start.AddTransition(transition, &to)
+				start.AddTransition(getTransitionType(transition),transition, &to)
 			}
 		} else {
 			from := nfa.FindState(fromState)
@@ -107,7 +123,7 @@ func CreateNfaFromString(str string) Nfa {
 				if transition == "ε" {
 					from.AddEpsilonTo(&to)
 				} else {
-					from.AddTransition(transition, &to)
+					from.AddTransition(getTransitionType(transition),transition, &to)
 				}
 			}
 		}
