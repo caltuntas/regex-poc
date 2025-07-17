@@ -8,7 +8,18 @@ import (
 
 func Compile(n Node) Nfa {
 	nfa := NewNfa("s")
+	initMatchers()
 	return compileNode(&nfa, n)
+}
+
+type matcherFunc func(t Transition, char rune) bool
+var matchers map[string]matcherFunc
+
+func initMatchers() {
+	matchers = map[string]matcherFunc {
+		LITERAL: matchLiteral,
+		META: matchMeta,
+	}
 }
 
 func compileNode(nfa *Nfa, n Node) Nfa {
@@ -18,7 +29,7 @@ func compileNode(nfa *Nfa, n Node) Nfa {
 	case *SequenceNode:
 		return compileSequenceNode(nfa, n)
 	case *StarNode:
-		return compileStartNode(nfa, n)
+		return compileStarNode(nfa, n)
 	case *CharList:
 		return compileCharList(nfa, n)
 	case *MetaCharacterNode:
@@ -61,7 +72,7 @@ func compileSequenceNode(parentNfa *Nfa, n *SequenceNode) Nfa {
 	return nfa
 }
 
-func compileStartNode(parentNfa *Nfa, n *StarNode) Nfa {
+func compileStarNode(parentNfa *Nfa, n *StarNode) Nfa {
 	nfa := NewNfa(parentNfa.StatePrefix)
 	nfa.StateCount = parentNfa.StateCount
 	start := nfa.NewStart()
@@ -70,12 +81,11 @@ func compileStartNode(parentNfa *Nfa, n *StarNode) Nfa {
 	childNfa := compileNode(parentNfa, n.Child)
 	childStart := childNfa.Start
 	childAccept := childNfa.Accept
-	start.Epsilon = append(start.Epsilon, childStart)
-	start.Epsilon = append(start.Epsilon, accept)
-	childAccept.Epsilon = append(childAccept.Epsilon, accept)
-	childAccept.Epsilon = append(childAccept.Epsilon, childStart)
-	nfa.Start = start
-	nfa.Accept = accept
+	// TODO: changing the order of following epsilon transitions breaks the encoding
+	start.AddEpsilonTo(childStart)
+	start.AddEpsilonTo(accept)
+	childAccept.AddEpsilonTo(accept)
+	childAccept.AddEpsilonTo(childStart)
 	return nfa
 }
 
@@ -115,18 +125,15 @@ func concat(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
 	return nfa
 }
 
+func matchLiteral(t Transition, char rune) bool {
+	return t.Value == string(char)
+}
 
-func IsMatching(stateKey string, char rune) bool {
-	if stateKey == string(char) {
+func matchMeta(t Transition, char rune) bool {
+	if t.Value == DOT {
 		return true
-	}
-	if stateKey == DOT {
-		return true
-	}
-	if stateKey == WHITESPACE {
-		if unicode.IsSpace(char) {
-			return true
-		}
+	} else if t.Value == WHITESPACE {
+		return unicode.IsSpace(char)
 	}
 	return false
 }
@@ -138,7 +145,7 @@ func Match(n Nfa, input string) bool {
 		for _, s := range states {
 			var targetStates []*State
 			for _,t := range s.Transitions {
-				if IsMatching(t.Value,char) {
+				if matchers[t.Type](t,char) {
 					targetStates = append(targetStates,t.State)
 				}
 			}
