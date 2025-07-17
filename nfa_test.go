@@ -55,6 +55,8 @@ func TestStarLiteralToNFA(t *testing.T) {
 		state1,state4,ε
 	`
 	actualEncoding := nfa.Encode()
+	str := nfa.ToString()
+	fmt.Print(str)
 	expectedNfa := CreateNfaFromString(expected)
 	expectedEncoding := expectedNfa.Encode()
 
@@ -178,28 +180,30 @@ func TestDotLiteralToNFA(t *testing.T) {
 func TestStarWithCharsetToNFA(t *testing.T) {
 	ast := nb.Seq(
 		nb.Lit('a'),
-		nb.Star(nb.List(nb.Lit('b'),nb.Lit('c'))),
+		nb.Star(nb.List(nb.Lit('b'), nb.Lit('c'))),
 		nb.Lit('d'),
 	)
 	expected := `
 state1,state2,a
-state2,state9,ε
-state9,state5,ε
-state5,state6,b
-state6,state10,ε
-state10,state4,ε
-state4,state10,d
-state10,state9,ε
-state9,state7,ε
-state7,state8,c
-state8,state10,ε
-state2,state4,ε
+state2,state3,ε
+state3,state4,ε
+state4,state5,b
+state5,state6,ε
+state6,state7,ε
+state7,state8,d
+state6,state3,ε
+state3,state9,ε
+state9,state10,c
+state10,state6,ε
+state2,state7,ε
 	`
 	nfa := Compile(ast)
 	str := nfa.ToString()
-	fmt.Print(str)
+	fmt.Println(str)
 	actualEncoding := nfa.Encode()
 	expectedNfa := CreateNfaFromString(expected)
+	str = expectedNfa.ToString()
+	fmt.Println(str)
 	expectedEncoding := expectedNfa.Encode()
 
 	if actualEncoding != expectedEncoding {
@@ -210,7 +214,7 @@ state2,state4,ε
 func TestEncode(t *testing.T) {
 	ast := nb.Seq(
 		nb.Lit('p'),
-		nb.List(nb.Lit('a'),nb.Lit('b')),
+		nb.List(nb.Lit('a'), nb.Lit('b')),
 	)
 	nfa := Compile(ast)
 	actualEncoding := nfa.Encode()

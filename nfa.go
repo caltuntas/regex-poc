@@ -24,11 +24,11 @@ type TransitionType int
 
 const (
 	Literal TransitionType = iota
-	Meta 
+	Meta
 )
 
 func (me TransitionType) String() string {
-    return [...]string{"Literal", "Meta"}[me]
+	return [...]string{"Literal", "Meta"}[me]
 }
 
 type Transition struct {
@@ -93,7 +93,7 @@ func (n *Nfa) FindState(name string) *State {
 }
 
 func getTransitionType(str string) TransitionType {
-	if str==DOT || str==WHITESPACE {
+	if str == DOT || str == WHITESPACE {
 		return Meta
 	}
 	return Literal
@@ -114,17 +114,23 @@ func CreateNfaFromString(str string) Nfa {
 			if transition == "ε" {
 				start.AddEpsilonTo(&to)
 			} else {
-				start.AddTransition(getTransitionType(transition),transition, &to)
+				start.AddTransition(getTransitionType(transition), transition, &to)
 			}
 		} else {
 			from := nfa.FindState(fromState)
-			if from != nil {
-				to := nfa.NewState(toState)
-				if transition == "ε" {
-					from.AddEpsilonTo(&to)
-				} else {
-					from.AddTransition(getTransitionType(transition),transition, &to)
-				}
+			if from == nil {
+				state := nfa.NewState(fromState)
+				from = &state
+			}
+			to := nfa.FindState(toState)
+			if to == nil {
+				state := nfa.NewState(toState)
+				to = &state
+			}
+			if transition == "ε" {
+				from.AddEpsilonTo(to)
+			} else {
+				from.AddTransition(getTransitionType(transition), transition, to)
 			}
 		}
 	}
@@ -172,14 +178,14 @@ func (n *Nfa) Encode() string {
 }
 
 func (s *State) Encode() string {
-	seen := make(map[string]bool)
+	seen := make(map[*State]bool)
 
 	var encode func(s *State) string
 	encode = func(s *State) string {
-		if seen[s.Name] {
+		if seen[s] {
 			return "<back>"
 		}
-		seen[s.Name] = true
+		seen[s] = true
 
 		var parts []string
 
@@ -209,24 +215,24 @@ func (s *State) Encode() string {
 	return encode(s)
 }
 
-func stateToString(s *State, str *string, used map[string]bool) {
-	isUsed, ok := used[s.Name]
+func stateToString(s *State, str *string, used map[*State]bool) {
+	isUsed, ok := used[s]
 	if ok && isUsed {
 		return
 	}
-	used[s.Name] = true
+	used[s] = true
 	for _, t := range s.Transitions {
-		*str += fmt.Sprintf("%s --> %s, %s\n", s.Name, t.State.Name, t.Value)
+		*str += fmt.Sprintf("%p --> %p, %s\n", s, t.State, t.Value)
 		stateToString(t.State, str, used)
 	}
 	for _, state := range s.Epsilon {
-		*str += fmt.Sprintf("%s --> %s, ε\n", s.Name, state.Name)
+		*str += fmt.Sprintf("%p --> %p, ε\n", s, state)
 		stateToString(state, str, used)
 	}
 }
 
 func (s *State) ToString() string {
-	used := make(map[string]bool)
+	used := make(map[*State]bool)
 	str := ""
 	stateToString(s, &str, used)
 	return str
