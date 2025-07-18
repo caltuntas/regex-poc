@@ -65,49 +65,6 @@ func getTransitionType(str string) TransitionType {
 	return Literal
 }
 
-func CreateNfaFromString(str string) Nfa {
-	var stateMap map[string]*State
-	stateMap =make(map[string]*State)
-	nfa := Nfa{}
-	lines := strings.Split(strings.TrimSpace(str), "\n")
-	for _, line := range lines {
-		parts := strings.Split(strings.TrimSpace(line), ",")
-		fromState := parts[0]
-		toState := parts[1]
-		transition := parts[2]
-		if nfa.Start == nil {
-			start := nfa.NewStart()
-			stateMap[fromState] = start
-			to := State{}
-			stateMap[toState] = &to
-			if transition == "ε" {
-				start.AddEpsilonTo(&to)
-			} else {
-				start.AddTransition(getTransitionType(transition), transition, &to)
-			}
-		} else {
-			from := stateMap[fromState]
-			if from == nil {
-				state := nfa.NewState()
-				stateMap[fromState] = state
-				from = state
-			}
-			to := stateMap[toState]
-			if to == nil {
-				state := nfa.NewState()
-			 stateMap[toState] = state
-				to = state
-			}
-			if transition == "ε" {
-				from.AddEpsilonTo(to)
-			} else {
-				from.AddTransition(getTransitionType(transition), transition, to)
-			}
-		}
-	}
-	return nfa
-}
-
 func (n *Nfa) NewStart() *State {
 	start := &State{}
 	n.Start = start
