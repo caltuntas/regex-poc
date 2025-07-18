@@ -36,7 +36,6 @@ type Transition struct {
 }
 
 type State struct {
-	Name        string
 	Transitions []Transition
 	Epsilon     []*State
 }
@@ -54,38 +53,9 @@ func (s *State) AddTransition(kind TransitionType, condition string, toState *St
 	s.Transitions = append(s.Transitions, t)
 }
 
-func (n *Nfa) NewState(name string) State {
-	state := State{Name: name}
+func (n *Nfa) NewState() *State {
+	state := &State{}
 	return state
-}
-
-func (n *Nfa) FindState(name string) *State {
-	seen := make(map[string]bool)
-	var findState func(name string, s *State) *State
-	findState = func(name string, s *State) *State {
-		if seen[s.Name] {
-			return nil
-		}
-		seen[s.Name] = true
-		if s.Name == name {
-			return s
-		}
-		for _, transition := range s.Transitions {
-			stateFound := findState(name, transition.State)
-			if stateFound != nil {
-				return stateFound
-			}
-		}
-		for _, state := range s.Epsilon {
-			stateFound := findState(name, state)
-			if stateFound != nil {
-				return stateFound
-			}
-		}
-		return nil
-	}
-
-	return findState(name, n.Start)
 }
 
 func getTransitionType(str string) TransitionType {
@@ -96,6 +66,8 @@ func getTransitionType(str string) TransitionType {
 }
 
 func CreateNfaFromString(str string) Nfa {
+	var stateMap map[string]*State
+	stateMap =make(map[string]*State)
 	nfa := Nfa{}
 	lines := strings.Split(strings.TrimSpace(str), "\n")
 	for _, line := range lines {
@@ -105,23 +77,26 @@ func CreateNfaFromString(str string) Nfa {
 		transition := parts[2]
 		if nfa.Start == nil {
 			start := nfa.NewStart()
-			start.Name = fromState
-			to := nfa.NewState(toState)
+			stateMap[fromState] = start
+			to := State{}
+			stateMap[toState] = &to
 			if transition == "ε" {
 				start.AddEpsilonTo(&to)
 			} else {
 				start.AddTransition(getTransitionType(transition), transition, &to)
 			}
 		} else {
-			from := nfa.FindState(fromState)
+			from := stateMap[fromState]
 			if from == nil {
-				state := nfa.NewState(fromState)
-				from = &state
+				state := nfa.NewState()
+				stateMap[fromState] = state
+				from = state
 			}
-			to := nfa.FindState(toState)
+			to := stateMap[toState]
 			if to == nil {
-				state := nfa.NewState(toState)
-				to = &state
+				state := nfa.NewState()
+			 stateMap[toState] = state
+				to = state
 			}
 			if transition == "ε" {
 				from.AddEpsilonTo(to)
