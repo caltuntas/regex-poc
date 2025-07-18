@@ -139,14 +139,6 @@ func (n *Nfa) NewStart() *State {
 	return start
 }
 
-func (n *Nfa) AddStart(s *State) {
-	n.Start = s
-}
-
-func (n *Nfa) AddAccept(s *State) {
-	n.Accept = s
-}
-
 func (s *State) AddEpsilonTo(to *State) {
 	s.Epsilon = append(s.Epsilon, to)
 }

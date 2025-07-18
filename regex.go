@@ -94,8 +94,8 @@ func union( n1 Nfa, n2 Nfa) Nfa {
 
 func concat( n1 Nfa, n2 Nfa) Nfa {
 	nfa := NewNfa()
-	nfa.AddStart(n1.Start)
-	nfa.AddAccept(n2.Accept)
+	nfa.Start = n1.Start
+	nfa.Accept = n2.Accept
 	n1.Accept.Transitions = n2.Start.Transitions
 	n1.Accept.Epsilon = n2.Start.Epsilon
 	n1.Accept = n2.Start
