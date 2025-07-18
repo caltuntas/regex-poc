@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"testing"
+	"strings"
 )
 
 var nb NodeBuilder
@@ -55,8 +55,6 @@ func TestStarLiteralToNFA(t *testing.T) {
 		state1,state4,ε
 	`
 	actualEncoding := nfa.Encode()
-	str := nfa.ToString()
-	fmt.Print(str)
 	expectedNfa := CreateNfaFromString(expected)
 	expectedEncoding := expectedNfa.Encode()
 
@@ -198,12 +196,8 @@ state10,state6,ε
 state2,state7,ε
 	`
 	nfa := Compile(ast)
-	str := nfa.ToString()
-	fmt.Println(str)
 	actualEncoding := nfa.Encode()
 	expectedNfa := CreateNfaFromString(expected)
-	str = expectedNfa.ToString()
-	fmt.Println(str)
 	expectedEncoding := expectedNfa.Encode()
 
 	if actualEncoding != expectedEncoding {
@@ -221,5 +215,23 @@ func TestEncode(t *testing.T) {
 	expectedEncoding := "(s-[Literal:p]->(s-[ε]->(s-[Literal:a]->(s-[ε]->)))(s-[ε]->(s-[Literal:b]->(s-[ε]-><back>))))"
 	if actualEncoding != expectedEncoding {
 		t.Fatalf("NFA mismatch:\nGot:\n%s\nExpected:\n%s", actualEncoding, expectedEncoding)
+	}
+}
+
+func TestToDigraph(t *testing.T) {
+	expected := `
+digraph {
+s1->s2 [label=ε]
+s2->s4 [label=a]
+s4->s6 [label=ε]
+s4->s2 [label=ε]
+s1->s6 [label=ε]
+}
+`
+	ast := nb.Star(nb.Lit('a'))
+	nfa := Compile(ast)
+	actual := nfa.ToDigraph()
+	if strings.TrimSpace(actual) != strings.TrimSpace(expected) {
+		t.Fatalf("NFA mismatch:\nGot:\n%s\nExpected:\n%s", actual, expected)
 	}
 }

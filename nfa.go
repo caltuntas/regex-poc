@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -13,8 +14,8 @@ const (
 )
 
 type Nfa struct {
-	Start       *State
-	Accept      *State
+	Start  *State
+	Accept *State
 }
 
 type TransitionType int
@@ -156,12 +157,6 @@ func (n *Nfa) NewAccept() *State {
 	return accept
 }
 
-func (n *Nfa) ToString() string {
-	str := ""
-	str += n.Start.ToString()
-	return str
-}
-
 func (n *Nfa) Encode() string {
 	encoded := ""
 	encoded += n.Start.Encode()
@@ -206,25 +201,40 @@ func (s *State) Encode() string {
 	return encode(s)
 }
 
-func stateToString(s *State, str *string, used map[*State]bool) {
-	isUsed, ok := used[s]
-	if ok && isUsed {
-		return
-	}
-	used[s] = true
-	for _, t := range s.Transitions {
-		*str += fmt.Sprintf("%p --> %p, %s\n", s, t.State, t.Value)
-		stateToString(t.State, str, used)
-	}
-	for _, state := range s.Epsilon {
-		*str += fmt.Sprintf("%p --> %p, ε\n", s, state)
-		stateToString(state, str, used)
-	}
-}
-
-func (s *State) ToString() string {
+func (n *Nfa) ToDigraph() string {
 	used := make(map[*State]bool)
-	str := ""
-	stateToString(s, &str, used)
-	return str
+	names := make(map[*State]string)
+	result := "digraph {\n"
+	counter := 0
+	var name func(s *State) string
+	name = func(s *State) string {
+		key, ok := names[s]
+		counter++
+		if ok {
+			return key
+		} else {
+			names[s] = "s" + strconv.Itoa(counter)
+			return names[s]
+		}
+	}
+	var toEdge func(s *State)
+	toEdge = func(s *State) {
+		isUsed, ok := used[s]
+		if ok && isUsed {
+			return
+		}
+		used[s] = true
+		for _, t := range s.Transitions {
+			result += fmt.Sprintf("%s->%s [label=%s]\n", name(s), name(t.State), t.Value)
+			toEdge(t.State)
+		}
+		for _, state := range s.Epsilon {
+			result += fmt.Sprintf("%s->%s [label=ε]\n", name(s), name(state))
+			toEdge(state)
+		}
+	}
+
+	toEdge(n.Start)
+	result += "}\n"
+	return result
 }
