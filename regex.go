@@ -7,9 +7,8 @@ import (
 )
 
 func Compile(n Node) Nfa {
-	nfa := NewNfa("s")
 	initMatchers()
-	return compileNode(&nfa, n)
+	return compileNode( n)
 }
 
 type matcherFunc func(t Transition, char rune) bool
@@ -22,57 +21,47 @@ func initMatchers() {
 	}
 }
 
-func compileNode(nfa *Nfa, n Node) Nfa {
+func compileNode(n Node) Nfa {
 	switch n:=n.(type) {
 	case *LiteralNode:
-		return compileLiteral(nfa, n)
+		return compileLiteral( n)
 	case *SequenceNode:
-		return compileSequence(nfa, n)
+		return compileSequence( n)
 	case *StarNode:
-		return compileStar(nfa, n)
+		return compileStar( n)
 	case *CharList:
-		return compileCharList(nfa, n)
+		return compileCharList( n)
 	case *MetaCharacterNode:
-		return compileMetaCharacter(nfa, n)
+		return compileMetaCharacter( n)
 	default:
 		panic(fmt.Sprintf("Unknown node type %T", n))
 	}
 }
 
-func compileLiteral(parentNfa *Nfa, n *LiteralNode) Nfa {
-	nfa := NewNfa(parentNfa.StatePrefix)
-	nfa.StateCount = parentNfa.StateCount
-	start := nfa.NewStart()
-	accept := nfa.NewAccept()
-	start.AddTransition(Literal,string(n.Value),accept)
-	parentNfa.StateCount = nfa.StateCount
+func compileLiteral(n *LiteralNode) Nfa {
+	nfa := NewNfa()
+	nfa.Start.AddTransition(Literal,string(n.Value),nfa.Accept)
 	return nfa
 }
 
-func compileMetaCharacter(parentNfa *Nfa, n *MetaCharacterNode) Nfa {
-	nfa := NewNfa(parentNfa.StatePrefix)
-	nfa.StateCount = parentNfa.StateCount
-	start := nfa.NewStart()
-	accept := nfa.NewAccept()
-	start.AddTransition(Meta, n.Value,accept)
-	parentNfa.StateCount = nfa.StateCount
+func compileMetaCharacter( n *MetaCharacterNode) Nfa {
+	nfa := NewNfa()
+	nfa.Start.AddTransition(Meta, n.Value,nfa.Accept)
 	return nfa
 }
 
-func compileSequence(parentNfa *Nfa, n *SequenceNode) Nfa {
-	nfa := compileNode(parentNfa, n.Children[0])
+func compileSequence( n *SequenceNode) Nfa {
+	nfa := compileNode( n.Children[0])
 	for i := 1; i < len(n.Children); i++ {
-		childNfa := compileNode(parentNfa, n.Children[i])
-		nfa = concat(parentNfa, nfa, childNfa)
+		childNfa := compileNode( n.Children[i])
+		nfa = concat( nfa, childNfa)
 	}
 	return nfa
 }
 
-func compileStar(parentNfa *Nfa, n *StarNode) Nfa {
-	nfa := NewNfa(parentNfa.StatePrefix)
-	nfa.StateCount = parentNfa.StateCount
-	parentNfa.StateCount = nfa.StateCount
-	childNfa := compileNode(parentNfa, n.Child)
+func compileStar( n *StarNode) Nfa {
+	nfa := NewNfa()
+	childNfa := compileNode( n.Child)
 	// TODO: changing the order of following epsilon transitions breaks the encoding
 	nfa.Start.AddEpsilonTo(childNfa.Start)
 	nfa.Start.AddEpsilonTo(nfa.Accept)
@@ -81,24 +70,21 @@ func compileStar(parentNfa *Nfa, n *StarNode) Nfa {
 	return nfa
 }
 
-func compileCharList(parentNfa *Nfa, n *CharList) Nfa {
+func compileCharList( n *CharList) Nfa {
 	var charListNfa Nfa
 	for _, node := range n.Chars {
 		if charListNfa == (Nfa{}) {
-			charListNfa = compileNode(parentNfa,node)
+			charListNfa = compileNode(node)
 		} else {
-			nfa := compileNode(parentNfa, node)
-			charListNfa = union(parentNfa, charListNfa, nfa)
+			nfa := compileNode( node)
+			charListNfa = union( charListNfa, nfa)
 		}
 	}
 	return charListNfa
 }
 
-func union(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
-	nfa := NewNfa(parentNfa.StatePrefix)
-	nfa.StateCount = parentNfa.StateCount
-	nfa.NewStart()
-  nfa.NewAccept()
+func union( n1 Nfa, n2 Nfa) Nfa {
+	nfa := NewNfa()
 	nfa.Start.AddEpsilonTo(n1.Start)
 	nfa.Start.AddEpsilonTo(n2.Start)
 	n1.Accept.AddEpsilonTo(nfa.Accept)
@@ -106,9 +92,8 @@ func union(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
 	return nfa
 }
 
-func concat(parentNfa *Nfa, n1 Nfa, n2 Nfa) Nfa {
-	nfa := NewNfa(parentNfa.StatePrefix)
-	nfa.StateCount = parentNfa.StateCount
+func concat( n1 Nfa, n2 Nfa) Nfa {
+	nfa := NewNfa()
 	nfa.AddStart(n1.Start)
 	nfa.AddAccept(n2.Accept)
 	n1.Accept.Transitions = n2.Start.Transitions

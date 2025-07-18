@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -16,8 +15,6 @@ const (
 type Nfa struct {
 	Start       *State
 	Accept      *State
-	StateCount  int
-	StatePrefix string
 }
 
 type TransitionType int
@@ -43,10 +40,8 @@ type State struct {
 	Epsilon     []*State
 }
 
-func NewNfa(prefix string) Nfa {
+func NewNfa() Nfa {
 	nfa := Nfa{}
-	nfa.StatePrefix = prefix
-	nfa.StateCount++
 	nfa.NewStart()
 	nfa.NewAccept()
 	return nfa
@@ -139,9 +134,7 @@ func CreateNfaFromString(str string) Nfa {
 
 func (n *Nfa) NewStart() *State {
 	start := &State{}
-	start.Name = n.StatePrefix + strconv.Itoa(n.StateCount)
 	n.Start = start
-	n.StateCount++
 	return start
 }
 
@@ -159,9 +152,7 @@ func (s *State) AddEpsilonTo(to *State) {
 
 func (n *Nfa) NewAccept() *State {
 	accept := &State{}
-	accept.Name = n.StatePrefix + strconv.Itoa(n.StateCount)
 	n.Accept = accept
-	n.StateCount++
 	return accept
 }
 
