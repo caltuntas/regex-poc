@@ -8,7 +8,7 @@ import (
 
 func Compile(n Node) Nfa {
 	initMatchers()
-	return compileNode( n)
+	return compileNode(n)
 }
 
 type matcherFunc func(t Transition, char rune) bool
@@ -24,15 +24,15 @@ func initMatchers() {
 func compileNode(n Node) Nfa {
 	switch n:=n.(type) {
 	case *LiteralNode:
-		return compileLiteral( n)
+		return compileLiteral(n)
 	case *SequenceNode:
-		return compileSequence( n)
+		return compileSequence(n)
 	case *StarNode:
-		return compileStar( n)
+		return compileStar(n)
 	case *CharList:
-		return compileCharList( n)
+		return compileCharList(n)
 	case *MetaCharacterNode:
-		return compileMetaCharacter( n)
+		return compileMetaCharacter(n)
 	default:
 		panic(fmt.Sprintf("Unknown node type %T", n))
 	}
@@ -44,24 +44,24 @@ func compileLiteral(n *LiteralNode) Nfa {
 	return nfa
 }
 
-func compileMetaCharacter( n *MetaCharacterNode) Nfa {
+func compileMetaCharacter(n *MetaCharacterNode) Nfa {
 	nfa := NewNfa()
 	nfa.Start.AddTransition(Meta, n.Value,nfa.Accept)
 	return nfa
 }
 
-func compileSequence( n *SequenceNode) Nfa {
-	nfa := compileNode( n.Children[0])
+func compileSequence(n *SequenceNode) Nfa {
+	nfa := compileNode(n.Children[0])
 	for i := 1; i < len(n.Children); i++ {
-		childNfa := compileNode( n.Children[i])
-		nfa = concat( nfa, childNfa)
+		childNfa := compileNode(n.Children[i])
+		nfa = concat(nfa, childNfa)
 	}
 	return nfa
 }
 
-func compileStar( n *StarNode) Nfa {
+func compileStar(n *StarNode) Nfa {
 	nfa := NewNfa()
-	childNfa := compileNode( n.Child)
+	childNfa := compileNode(n.Child)
 	// TODO: changing the order of following epsilon transitions breaks the encoding
 	nfa.Start.AddEpsilonTo(childNfa.Start)
 	nfa.Start.AddEpsilonTo(nfa.Accept)
@@ -70,20 +70,20 @@ func compileStar( n *StarNode) Nfa {
 	return nfa
 }
 
-func compileCharList( n *CharList) Nfa {
+func compileCharList(n *CharList) Nfa {
 	var charListNfa Nfa
 	for _, node := range n.Chars {
 		if charListNfa == (Nfa{}) {
 			charListNfa = compileNode(node)
 		} else {
-			nfa := compileNode( node)
+			nfa := compileNode(node)
 			charListNfa = union( charListNfa, nfa)
 		}
 	}
 	return charListNfa
 }
 
-func union( n1 Nfa, n2 Nfa) Nfa {
+func union(n1 Nfa, n2 Nfa) Nfa {
 	nfa := NewNfa()
 	nfa.Start.AddEpsilonTo(n1.Start)
 	nfa.Start.AddEpsilonTo(n2.Start)
@@ -92,7 +92,7 @@ func union( n1 Nfa, n2 Nfa) Nfa {
 	return nfa
 }
 
-func concat( n1 Nfa, n2 Nfa) Nfa {
+func concat(n1 Nfa, n2 Nfa) Nfa {
 	nfa := NewNfa()
 	nfa.Start = n1.Start
 	nfa.Accept = n2.Accept
@@ -103,13 +103,13 @@ func concat( n1 Nfa, n2 Nfa) Nfa {
 }
 
 func matchLiteral(t Transition, char rune) bool {
-	return t.Value == string(char)
+	return t.Condition == string(char)
 }
 
 func matchMeta(t Transition, char rune) bool {
-	if t.Value == DOT {
+	if t.Condition == DOT {
 		return true
-	} else if t.Value == WHITESPACE {
+	} else if t.Condition == WHITESPACE {
 		return unicode.IsSpace(char)
 	}
 	return false

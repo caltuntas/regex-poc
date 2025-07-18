@@ -31,7 +31,7 @@ func (me TransitionType) String() string {
 
 type Transition struct {
 	Type  TransitionType
-	Value string
+	Condition string
 	State *State
 }
 
@@ -48,7 +48,7 @@ func NewNfa() Nfa {
 }
 
 func (s *State) AddTransition(kind TransitionType, condition string, toState *State) {
-	t := Transition{Type: kind, Value: condition}
+	t := Transition{Type: kind, Condition: condition}
 	t.State = toState
 	s.Transitions = append(s.Transitions, t)
 }
@@ -100,14 +100,14 @@ func (s *State) Encode() string {
 		var parts []string
 
 		sort.Slice(s.Transitions, func(i, j int) bool {
-			return s.Transitions[i].Value < s.Transitions[j].Value
+			return s.Transitions[i].Condition < s.Transitions[j].Condition
 		})
 
 		var encodings []string
 		for _, t := range s.Transitions {
 			encodedState := encode(t.State)
 			encodings = append(encodings, encodedState)
-			parts = append(parts, fmt.Sprintf("(s-[%s:%s]->%s)", t.Type, t.Value, encodedState))
+			parts = append(parts, fmt.Sprintf("(s-[%s:%s]->%s)", t.Type, t.Condition, encodedState))
 		}
 
 		var epsilonEncodings []string
@@ -149,7 +149,7 @@ func (n *Nfa) ToDigraph() string {
 		}
 		used[s] = true
 		for _, t := range s.Transitions {
-			result += fmt.Sprintf("%s->%s [label=%s]\n", name(s), name(t.State), t.Value)
+			result += fmt.Sprintf("%s->%s [label=%s]\n", name(s), name(t.State), t.Condition)
 			toEdge(t.State)
 		}
 		for _, state := range s.Epsilon {
