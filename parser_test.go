@@ -105,7 +105,7 @@ func testSequenceNode(t *testing.T, actual *SequenceNode, expectedNode Node) boo
 
 var b NodeBuilder
 
-func TestParseCharListWithStar(t *testing.T) {
+func TestRegexParser(t *testing.T) {
 	cases := map[string]Node{
 		"p[ab]*c": b.Seq(
 			b.Lit('p'),
@@ -133,6 +133,12 @@ func TestParseCharListWithStar(t *testing.T) {
 			b.Lit('a'),
 			b.Star(b.Meta(DOT)),
 			b.Lit('t'),
+		),
+		"pa {": b.Seq(
+			b.Lit('p'),
+			b.Lit('a'),
+			b.Lit(' '),
+			b.Lit('{'),
 		),
 	}
 	for key, val := range cases {

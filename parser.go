@@ -55,6 +55,9 @@ func (p *Parser) parseFactor() Node {
 		if p.currentToken.Value == "s" {
 			return &MetaCharacterNode{Value: WHITESPACE}
 		}
+		if p.currentToken.Value == "S" {
+			return &MetaCharacterNode{Value: NONWHITESPACE}
+		}
 	case LBRACKET:
 		p.readNextToken()
 		charList := &CharList{}

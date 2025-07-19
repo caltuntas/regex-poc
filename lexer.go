@@ -46,9 +46,6 @@ func (l *Lexer) NextToken() Token {
 	if l.ch == 0 {
 		token.Type = EOF
 		token.Value = ""
-	} else if isLetter(l.ch) {
-		token.Type = LITERAL
-		token.Value = string(l.ch)
 	} else if l.ch == '.' {
 		token.Type = DOT
 		token.Value = string(l.ch)
@@ -63,6 +60,9 @@ func (l *Lexer) NextToken() Token {
 		token.Value = string(l.ch)
 	} else if l.ch == '\\' {
 		token.Type = ESCAPE
+		token.Value = string(l.ch)
+	} else {
+		token.Type = LITERAL
 		token.Value = string(l.ch)
 	}
 

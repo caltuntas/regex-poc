@@ -12,17 +12,18 @@ func Compile(n Node) Nfa {
 }
 
 type matcherFunc func(t Transition, char rune) bool
+
 var matchers map[TransitionType]matcherFunc
 
 func initMatchers() {
-	matchers = map[TransitionType]matcherFunc {
+	matchers = map[TransitionType]matcherFunc{
 		Literal: matchLiteral,
-		Meta: matchMeta,
+		Meta:    matchMeta,
 	}
 }
 
 func compileNode(n Node) Nfa {
-	switch n:=n.(type) {
+	switch n := n.(type) {
 	case *LiteralNode:
 		return compileLiteral(n)
 	case *SequenceNode:
@@ -40,13 +41,13 @@ func compileNode(n Node) Nfa {
 
 func compileLiteral(n *LiteralNode) Nfa {
 	nfa := NewNfa()
-	nfa.Start.AddTransition(Literal,string(n.Value),nfa.Accept)
+	nfa.Start.AddTransition(Literal, string(n.Value), nfa.Accept)
 	return nfa
 }
 
 func compileMetaCharacter(n *MetaCharacterNode) Nfa {
 	nfa := NewNfa()
-	nfa.Start.AddTransition(Meta, n.Value,nfa.Accept)
+	nfa.Start.AddTransition(Meta, n.Value, nfa.Accept)
 	return nfa
 }
 
@@ -77,7 +78,7 @@ func compileCharList(n *CharList) Nfa {
 			charListNfa = compileNode(node)
 		} else {
 			nfa := compileNode(node)
-			charListNfa = union( charListNfa, nfa)
+			charListNfa = union(charListNfa, nfa)
 		}
 	}
 	return charListNfa
@@ -111,36 +112,52 @@ func matchMeta(t Transition, char rune) bool {
 		return true
 	} else if t.Condition == WHITESPACE {
 		return unicode.IsSpace(char)
+	} else if t.Condition == NONWHITESPACE {
+		switch char {
+		case ' ', '\t', '\n', '\r', '\f', '\v':
+			return false
+		default:
+			return true
+		}
 	}
 	return false
 }
 
 func Match(n Nfa, input string) bool {
 	states := closures(n.Start)
-	for _,char := range input {
+	for i, char := range input {
+		fmt.Printf("checking character %d=%s\n", i, string(char))
 		var nextStates []*State
+		visited := make(map[*State]bool)
 		for _, s := range states {
 			var targetStates []*State
-			for _,t := range s.Transitions {
-				if matchers[t.Type](t,char) {
-					targetStates = append(targetStates,t.State)
+			for _, t := range s.Transitions {
+				if matchers[t.Type](t, char) {
+					targetStates = append(targetStates, t.State)
 				}
 			}
 			for _, ts := range targetStates {
 				closureStates := closures(ts)
-				nextStates = append(nextStates, closureStates...)
+				for _, c := range closureStates {
+					if visited[c] == false {
+						visited[c] = true
+						nextStates = append(nextStates, c)
+					} else {
+						fmt.Println("Visited before")
+					}
+				}
 			}
 		}
+		fmt.Printf("Count of next states=%d", len(nextStates))
 		states = nextStates
 	}
-
 	return slices.Contains(states, n.Accept)
 }
 
 func closures(n *State) []*State {
 	var states []*State
-  
-	var  findClosures func(childState *State)
+
+	var findClosures func(childState *State)
 	findClosures = func(childState *State) {
 		if slices.Contains(states, childState) == false {
 			states = append(states, childState)
@@ -149,7 +166,6 @@ func closures(n *State) []*State {
 			findClosures(epsilonState)
 		}
 	}
-
 	findClosures(n)
 	return states
 }
