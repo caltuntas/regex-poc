@@ -154,6 +154,50 @@ func Match(n Nfa, input string) bool {
 	return slices.Contains(states, n.Accept)
 }
 
+func matchFrom (n Nfa, input string) bool {
+	states := closures(n.Start)
+	for i, char := range input {
+		fmt.Printf("checking character %d=%s\n", i, string(char))
+		var nextStates []*State
+		visited := make(map[*State]bool)
+		for _, s := range states {
+			var targetStates []*State
+			for _, t := range s.Transitions {
+				if matchers[t.Type](t, char) {
+					targetStates = append(targetStates, t.State)
+				}
+			}
+			for _, ts := range targetStates {
+				closureStates := closures(ts)
+				for _, c := range closureStates {
+					if visited[c] == false {
+						visited[c] = true
+						nextStates = append(nextStates, c)
+					} else {
+						fmt.Println("Visited before")
+					}
+				}
+			}
+		}
+		fmt.Printf("Count of next states=%d", len(nextStates))
+		if slices.Contains(states, n.Accept) {
+			return true
+		}
+		states = nextStates
+	}
+	return slices.Contains(states, n.Accept)
+}
+
+func MatchPartial(n Nfa, fullInput string) bool {
+	for start := 0; start < len(fullInput); start++ {
+		input := fullInput[start:]
+		if matchFrom(n, input) {
+			return true
+		}
+	}
+	return false
+}
+
 func closures(n *State) []*State {
 	var states []*State
 
