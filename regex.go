@@ -188,13 +188,14 @@ func matchFrom (n Nfa, input string) bool {
 	return slices.Contains(states, n.Accept)
 }
 
-func MatchPartial(n Nfa, fullInput string) bool {
-	for start := 0; start < len(fullInput); start++ {
-		input := fullInput[start:]
-		if matchFrom(n, input) {
+func MatchPartial(nfa Nfa, fullInput string) bool {
+	var b NodeBuilder
+	ast := b.Seq(b.Star(b.Meta(DOT)))
+	startNfa := Compile(ast)
+	n := concat(startNfa,nfa)
+		if matchFrom(n, fullInput) {
 			return true
 		}
-	}
 	return false
 }
 
