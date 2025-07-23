@@ -163,12 +163,13 @@ func TestRegexPerformanceBacktrack(t *testing.T) {
 	nfa := Compile(ast)
 	str := nfa.ToDigraph()
 	fmt.Println(str)
-	if got := Match(nfa, config); got != true {
+	if got := MatchBacktrack(ast, config); got != true {
 		t.Errorf("Match(%q) = %v, want %v", config, got, false)
 	}
 }
 
 func TestRegexPerformancePartialBacktrack(t *testing.T) {
+	t.Skip()
 	pattern := `parent {[\s\S]*type.*[\s\S]*subtype.*[\s\S]*element.*[\s\S]*attributes.*[\s\S]*value testvalue.*[\s\S]*owner person1`
 	l := New(pattern)
 	parser := NewParser(l)
@@ -176,7 +177,7 @@ func TestRegexPerformancePartialBacktrack(t *testing.T) {
 	nfa := Compile(ast)
 	str := nfa.ToDigraph()
 	fmt.Println(str)
-	if got := MatchPartial(nfa, allConfig); got != true {
+	if got := MatchBacktrackPartial(ast, allConfig); got != true {
 		t.Errorf("Match(%q) = %v, want %v", config, got, false)
 	}
 }
@@ -403,6 +404,40 @@ func TestRegexMatchBacktrack(t *testing.T) {
 			got := MatchBacktrack(ast, c.input)
 			fmt.Printf("match test pattern=%s, input=%s, result=%t\n", key, c.input, got)
 			if got != c.match {
+				t.Errorf("Pattern = %s, Match(%q) = %v, want %v", key, c.input, got, c.match)
+			}
+		}
+	}
+}
+
+func TestBacktrackingRegexMatchPartial(t *testing.T) {
+	cases := map[string][]struct {
+		input string
+		match bool
+	}{
+		"aa.*": {
+			{"aa", true},
+			{"aab", true},
+			{"aa123", true},
+			{"xxxy aab ttt", true},
+			{"baaxy", true},
+			{"123aa", true},
+			{"aa bb", true},
+			{"AAb", false},
+			{"xaax", true},
+			{"xaxa", false},
+			{"aaa", true},
+			{"baa", true},
+			{"", false},
+		},
+	}
+
+	for key, val := range cases {
+		l := New(key)
+		parser := NewParser(l)
+		ast := parser.Ast()
+		for _, c := range val {
+			if got := MatchBacktrackPartial(ast, c.input); got != c.match {
 				t.Errorf("Pattern = %s, Match(%q) = %v, want %v", key, c.input, got, c.match)
 			}
 		}

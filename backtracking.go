@@ -100,3 +100,13 @@ func MatchBacktrack(ast Node, input string) bool {
 	ok, next := matchNode(ast, input, 0)
 	return ok && next == len(input)
 }
+
+func MatchBacktrackPartial(ast Node, input string) bool {
+    for start := 0; start <= len(input); start++ {
+        ok, _ := matchNode(ast, input, start)
+        if ok {
+            return true
+        }
+    }
+    return false
+}
