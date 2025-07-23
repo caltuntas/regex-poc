@@ -33,19 +33,6 @@ func matchNode(node Node, input string, pos int) (bool, int) {
 	case *SequenceNode:
 		return matchSequence(n.Children, input, pos)
 
-	case *StarNode:
-		positions := []int{pos}
-		current := pos
-		for {
-			ok, next := matchNode(n.Child, input, current)
-			if !ok || next == current {
-				break
-			}
-			current = next
-			positions = append(positions, current)
-		}
-		return true, current
-
 	case *CharList:
 		if pos >= len(input) {
 			return false, pos
@@ -102,11 +89,11 @@ func MatchBacktrack(ast Node, input string) bool {
 }
 
 func MatchBacktrackPartial(ast Node, input string) bool {
-    for start := 0; start <= len(input); start++ {
-        ok, _ := matchNode(ast, input, start)
-        if ok {
-            return true
-        }
-    }
-    return false
+	for start := 0; start <= len(input); start++ {
+		ok, _ := matchNode(ast, input, start)
+		if ok {
+			return true
+		}
+	}
+	return false
 }
