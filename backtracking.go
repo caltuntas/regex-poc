@@ -24,38 +24,25 @@ func matchNode(node Node, input string, pos int) (bool, int) {
 				return true, pos + 1
 			}
 		case NONWHITESPACE:
-			if !(c == ' ' || c == '\t' || c == '\n' || c == '\r') {
+			if !unicode.IsSpace(c) {
 				return true, pos + 1
 			}
 		}
 		return false, pos
 
 	case *SequenceNode:
-		current := pos
-		var previous Node
-		previous = n.Children[0]
-		for _, child := range n.Children {
-			_, isStar := previous.(*StarNode) 
-			ok, next := matchNode(child, input, current)
-			if !ok && isStar{
-				ok, next = matchNode(child, input, current-1)
-			}
-			if !ok {
-				return false, pos // fail early, restore original pos
-			}
-			current = next
-			previous = child
-		}
-		return true, current
+		return matchSequence(n.Children, input, pos)
 
 	case *StarNode:
+		positions := []int{pos}
 		current := pos
 		for {
 			ok, next := matchNode(n.Child, input, current)
-			if !ok {
+			if !ok || next == current {
 				break
 			}
 			current = next
+			positions = append(positions, current)
 		}
 		return true, current
 
@@ -66,15 +53,47 @@ func matchNode(node Node, input string, pos int) (bool, int) {
 		current := pos
 		for _, ch := range n.Chars {
 			ok, next := matchNode(ch, input, current)
-			if !ok {
-				continue
-			} else {
+			if ok {
 				return true, next
 			}
 		}
 		return false, current
 	}
 	return false, pos
+}
+
+func matchSequence(nodes []Node, input string, pos int) (bool, int) {
+	if len(nodes) == 0 {
+		return true, pos
+	}
+
+	first := nodes[0]
+
+	if star, ok := first.(*StarNode); ok {
+		positions := []int{pos}
+		current := pos
+		for {
+			ok, next := matchNode(star.Child, input, current)
+			if !ok || next == current {
+				break
+			}
+			current = next
+			positions = append(positions, current)
+		}
+
+		for i := len(positions) - 1; i >= 0; i-- {
+			if ok, next := matchSequence(nodes[1:], input, positions[i]); ok {
+				return true, next
+			}
+		}
+		return false, pos
+	}
+
+	ok, next := matchNode(first, input, pos)
+	if !ok {
+		return false, pos
+	}
+	return matchSequence(nodes[1:], input, next)
 }
 
 func MatchBacktrack(ast Node, input string) bool {

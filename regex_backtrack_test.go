@@ -209,6 +209,7 @@ func TestRegexMatchBacktrack(t *testing.T) {
 			{"abbbbb", false},
 			{"xabc", false},
 			{"abccd", false},
+			{"abcd", true},
 		},
 		"ab*": {
 			{"a", true},
@@ -337,6 +338,60 @@ func TestRegexMatchBacktrack(t *testing.T) {
 		},
 		"pa.*b": {
 			{"pab", true},
+			{"paxb", true},
+			{"paxyzb", true},
+			{"pabbb", true},
+			{"paX", false},
+			{"pabbbbbX", false},
+		},
+		"a.*b": {
+			{"ab", true},
+			{"acb", true},
+			{"acccb", true},
+			{"abbbb", true},
+			{"acccx", false},
+			{"a", false},
+		},
+		"a.*b.*c": {
+			{"abc", true},
+			{"axybzzc", true},
+			{"abbbc", true},
+			{"abbbx", false},
+			{"ac", false},
+			{"ab", false},
+		},
+		"a*b*": {
+			{"", true},
+			{"a", true},
+			{"b", true},
+			{"ab", true},
+			{"aab", true},
+			{"abb", true},
+			{"aaabb", true},
+			{"c", false},
+		},
+		".*b": {
+			{"b", true},
+			{"bb", true},
+			{"ab", true},
+			{"aab", true},
+			{"abc", false},
+			{"", false},
+		},
+		"a.*z": {
+			{"az", true},
+			{"axyz", true},
+			{"axxxxxz", true},
+			{"axxxxx", false},
+		},
+		"a.*a.*a.*b": {
+			{"abbbbb", false},
+			{"aaab", true},
+			{"aab", false},
+			{"ab", false},
+			{"aaaa", false},
+			{"aaaab", true},
+			{"aaaaaaab", true},
 		},
 	}
 
@@ -345,7 +400,9 @@ func TestRegexMatchBacktrack(t *testing.T) {
 		parser := NewParser(l)
 		ast := parser.Ast()
 		for _, c := range val {
-			if got := MatchBacktrack(ast, c.input); got != c.match {
+			got := MatchBacktrack(ast, c.input)
+			fmt.Printf("match test pattern=%s, input=%s, result=%t\n", key, c.input, got)
+			if got != c.match {
 				t.Errorf("Pattern = %s, Match(%q) = %v, want %v", key, c.input, got, c.match)
 			}
 		}
