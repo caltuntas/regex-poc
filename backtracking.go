@@ -31,56 +31,52 @@ func matchNode(node Node, input string, pos int) (bool, int) {
 		return false, pos
 
 	case *SequenceNode:
-		return matchSequence(n.Children, input, pos)
+		current := pos
+		for i := 0; i < len(n.Children); i++ {
+			child := n.Children[i]
+			if star, ok := child.(*StarNode); ok {
+				positions := []int{current}
+				nextPos := current
+				for {
+					ok, next := matchNode(star.Child, input, nextPos)
+					if !ok || next == nextPos {
+						break
+					}
+					nextPos = next
+					positions = append(positions, nextPos)
+				}
+
+				for j := len(positions) - 1; j >= 0; j-- {
+					ok, endPos := matchNode(&SequenceNode{Children: n.Children[i+1:]}, input, positions[j])
+					if ok {
+						return true, endPos
+					}
+				}
+				return false, pos
+			}
+
+			ok, next := matchNode(child, input, current)
+			if !ok {
+				return false, pos
+			}
+			current = next
+		}
+		return true, current
 
 	case *CharList:
 		if pos >= len(input) {
 			return false, pos
 		}
-		current := pos
 		for _, ch := range n.Chars {
-			ok, next := matchNode(ch, input, current)
+			ok, next := matchNode(ch, input, pos)
 			if ok {
 				return true, next
 			}
 		}
-		return false, current
+		return false, pos
 	}
+
 	return false, pos
-}
-
-func matchSequence(nodes []Node, input string, pos int) (bool, int) {
-	if len(nodes) == 0 {
-		return true, pos
-	}
-
-	first := nodes[0]
-
-	if star, ok := first.(*StarNode); ok {
-		positions := []int{pos}
-		current := pos
-		for {
-			ok, next := matchNode(star.Child, input, current)
-			if !ok || next == current {
-				break
-			}
-			current = next
-			positions = append(positions, current)
-		}
-
-		for i := len(positions) - 1; i >= 0; i-- {
-			if ok, next := matchSequence(nodes[1:], input, positions[i]); ok {
-				return true, next
-			}
-		}
-		return false, pos
-	}
-
-	ok, next := matchNode(first, input, pos)
-	if !ok {
-		return false, pos
-	}
-	return matchSequence(nodes[1:], input, next)
 }
 
 func MatchBacktrack(ast Node, input string) bool {
