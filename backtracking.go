@@ -1,17 +1,45 @@
 package main
 
-import "unicode"
+import (
+	"fmt"
+	"unicode"
+)
+
+func printPosition(input string, pos int, label string) {
+	if pos >= len(input) {
+		for i:=len(input); i<=pos; i++ {
+			input += "_"
+		}
+	} else {
+		input += " "
+	}
+	for _, ch := range input {
+		fmt.Printf("%c ", ch)
+	}
+	fmt.Printf("--> %s\n", label)
+
+	for i := 0; i < len(input); i++ {
+		if i == pos {
+			fmt.Print("^ ")
+		} else {
+			fmt.Print("  ")
+		}
+	}
+	fmt.Println()
+}
 
 func matchNode(node Node, input string, pos int) (bool, int) {
 	switch n := node.(type) {
 
 	case *LiteralNode:
+		printPosition(input, pos, string(n.Value))
 		if pos < len(input) && input[pos] == n.Value {
 			return true, pos + 1
 		}
 		return false, pos
 
 	case *MetaCharacterNode:
+		printPosition(input, pos,n.Value)
 		if pos >= len(input) {
 			return false, pos
 		}
@@ -35,6 +63,7 @@ func matchNode(node Node, input string, pos int) (bool, int) {
 		for i := 0; i < len(n.Children); i++ {
 			child := n.Children[i]
 			if star, ok := child.(*StarNode); ok {
+				printPosition(input, current, star.String())
 				positions := []int{current}
 				nextPos := current
 				for {
@@ -67,8 +96,8 @@ func matchNode(node Node, input string, pos int) (bool, int) {
 		if pos >= len(input) {
 			return false, pos
 		}
-		for _, ch := range n.Chars {
-			ok, next := matchNode(ch, input, pos)
+		for _, chNode := range n.Chars {
+			ok, next := matchNode(chNode, input, pos)
 			if ok {
 				return true, next
 			}

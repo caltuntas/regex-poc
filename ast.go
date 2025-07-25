@@ -58,10 +58,7 @@ func (n* MetaCharacterNode) GetValue() string {
 }
 
 func (n *StarNode) String() string {
-	str := ""
-	str += fmt.Sprintln("StarNode, Child")
-	str += n.Child.String()
-  return str
+	return n.Child.String() + "*"
 }
 
 type CharList struct {
@@ -69,7 +66,11 @@ type CharList struct {
 }
 
 func (n *CharList) String() string {
-	return "charlist"
+	str := "["
+	for _,cn := range n.Chars {
+		str += cn.String()
+	}
+	return str + "]"
 }
 
 type NodeBuilder struct {

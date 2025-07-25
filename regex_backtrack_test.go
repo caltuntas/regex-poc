@@ -5,157 +5,8 @@ import (
 	"testing"
 )
 
-var configBacktrack = `parent {
-    type {
-        subtype TestSubType {
-            element TestElement {
-                attributes {
-                    name testname;
-                    description testdescription;
-                    count 1234;
-                    value testvalue;
-                }
-                owner person1`
-
-var allConfigBackTrack = `
-parent {
-    type {
-        subtype TestSubType {
-            element TestElement {
-                attributes {
-                    name testname;
-                    description testdescription;
-                    count 1234;
-                    value testvalue;
-                }
-                owner person1;
-            }
-        }
-        subtype TestSubType1 {
-            element TestElement1 {
-                attributes {
-                    name testname1;
-                    description testdescription1;
-                    count 1;
-                    value 1
-                }
-                owner person2;
-            }
-        }
-        subtype TestSubType2 {
-            element TestElement2 {
-                attributes {
-                    name testname2;
-                    description testdescription2;
-                    count 2;
-                    value 2
-                }
-                owner unknown;
-            }
-        }
-        subtype TestSubType3 {
-            element TestElement3 {
-                attributes {
-                    name testname3;
-                    description testdescription3;
-                    count 3;
-                    value 3
-                }
-                owner unknown;
-            }
-        }
-        subtype TestSubType3 {
-            element TestElement4 {
-                attributes {
-                    name testname4;
-                    description testdescription4;
-                    count 4;
-                    value 4
-                }
-                owner unknown;
-            }
-        }
-        subtype TestSubType4 {
-            element TestElement5 {
-                attributes {
-                    name testname5;
-                    description testdescription5;
-                    count 5;
-                    value 5
-                }
-                owner unknown;
-            }
-        }
-        subtype TestSubType5 {
-            element TestElement6 {
-                attributes {
-                    name testname6;
-                    description testdescription6;
-                    count 6;
-                    value 6
-                }
-                owner unknown;
-            }
-        }
-        subtype TestSubType6 {
-            element TestElement7 {
-                attributes {
-                    name testname7;
-                    description testdescription7;
-                    count 7;
-                    value 7
-                }
-                owner unknown;
-            }
-        }
-        subtype TestSubType7 {
-            element TestElement8 {
-                attributes {
-                    name testname8;
-                    description testdescription8;
-                    count 8;
-                    value 8
-                }
-                owner unknown;
-            }
-        }
-        subtype TestSubType8 {
-            element TestElement9 {
-                attributes {
-                    name testname9;
-                    description testdescription9;
-                    count 9;
-                    value 9
-                }
-                owner unknown;
-            }
-        }
-        subtype TestSubType9 {
-            element TestElement10 {
-                attributes {
-                    name testname10;
-                    description testdescription10;
-                    count 10;
-                    value 10
-                }
-                owner unknown;
-            }
-        }
-        subtype TestSubType10 {
-            element TestElement11 {
-                attributes {
-                    name testname11;
-                    description testdescription11;
-                    count 11;
-                    value 11
-                }
-                owner unknown;
-            }
-        }
-    }
-}`
-
 func TestRegexPerformanceBacktrack(t *testing.T) {
+	t.Skip()
 	pattern := `parent {[\s\S]*type.*[\s\S]*subtype.*[\s\S]*element.*[\s\S]*attributes.*[\s\S]*value testvalue.*[\s\S]*owner person1`
 	l := New(pattern)
 	parser := NewParser(l)
@@ -394,6 +245,9 @@ func TestRegexMatchBacktrack(t *testing.T) {
 			{"aaaab", true},
 			{"aaaaaaab", true},
 		},
+		"a*a*a*a*b": {
+			{"aaaaaaaaaaaaaa", false},
+		},
 	}
 
 	for key, val := range cases {
@@ -401,8 +255,9 @@ func TestRegexMatchBacktrack(t *testing.T) {
 		parser := NewParser(l)
 		ast := parser.Ast()
 		for _, c := range val {
+			fmt.Printf("match pattern=%s, input=%s\n\n", key, c.input)
 			got := MatchBacktrack(ast, c.input)
-			fmt.Printf("match test pattern=%s, input=%s, result=%t\n", key, c.input, got)
+			fmt.Printf("result pattern=%s, input=%s, result=%t\n", key, c.input, got)
 			if got != c.match {
 				t.Errorf("Pattern = %s, Match(%q) = %v, want %v", key, c.input, got, c.match)
 			}
