@@ -25,12 +25,7 @@ type Lexer struct {
 
 func New(pattern string) *Lexer {
 	l := &Lexer{input: pattern}
-	//l.readChar()
 	return l
-}
-
-func isLetter(chr byte) bool {
-	return chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z'
 }
 
 func (l *Lexer) PeekChar() byte {
@@ -65,7 +60,6 @@ func (l *Lexer) NextToken() Token {
 		token.Type = LITERAL
 		token.Value = string(l.ch)
 	}
-
 	return token
 }
 

@@ -254,6 +254,7 @@ func TestRegexMatchBacktrack(t *testing.T) {
 		l := New(key)
 		parser := NewParser(l)
 		ast := parser.Ast()
+		PrintAstTree(ast,0)
 		for _, c := range val {
 			fmt.Printf("match pattern=%s, input=%s\n\n", key, c.input)
 			got := MatchBacktrack(ast, c.input)

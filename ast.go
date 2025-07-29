@@ -88,3 +88,36 @@ func (b NodeBuilder) List(chars ...CharacterNode) *CharList {
 func (b NodeBuilder) Meta(s string) *MetaCharacterNode {
 	return &MetaCharacterNode{Value: s}
 }
+
+func PrintAstTree(node Node, indentLevel int) {
+	indentSize := 2
+	indent := indentLevel * indentSize
+	switch n := node.(type) {
+	case *LiteralNode:
+		fmt.Printf("%*sLiteral: '%s'\n", indent, "", n.String())
+	case *MetaCharacterNode:
+		fmt.Printf("%*sMeta: '%s'\n", indent, "", n.String())
+	case *CharList:
+		fmt.Printf("%*sCharList:\n", indent, "")
+		for _, ch := range n.Chars {
+			switch c := ch.(type) {
+			case *LiteralNode:
+				fmt.Printf("%*sLiteral: '%s'\n", indent+indentSize, "", c.String())
+			case *MetaCharacterNode:
+				fmt.Printf("%*sMeta: '%s'\n", indent+indentSize, "", c.String())
+			default:
+				fmt.Printf("%*sUnknown CharacterNode\n", indent+indentSize, "")
+			}
+		}
+	case *StarNode:
+		fmt.Printf("%*sStar:\n", indent, "")
+		PrintAstTree(n.Child, indentLevel+1)
+	case *SequenceNode:
+		fmt.Printf("%*sSequence:\n", indent, "")
+		for _, child := range n.Children {
+			PrintAstTree(child, indentLevel+2)
+		}
+	default:
+		fmt.Printf("%*sUnknown Node type\n", indent, "")
+	}
+}
