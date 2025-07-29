@@ -1,0 +1,11 @@
+Regex           ::= Expression+
+Expression      ::= Term+
+Term            ::= Factor Quantifier?
+Factor          ::= Literal | Metachar | '[' CharClass ']'
+Literal         ::= Character
+Metachar        ::= '\\s' | '\\S' | '.'
+CharClass       ::= CharClassItem+
+CharClassItem   ::= Character | EscapedChar
+EscapedChar     ::= '\\s' | '\\S'
+Character       ::= [a-z]
+Quantifier      ::= '*'
