@@ -1,25 +1,8 @@
-<expression>     ::= <term>
-                  | <term> <expression>
-
-<term>           ::= <factor> <quantifier>
-
-<factor>         ::= <literal>
-                  | <metachar>
-                  | "[" <char_class> "]"
-
-<literal>        ::= <character>
-
-<metachar>       ::= <escaped_type> | "."
-
-<escaped_type>   ::= "\\s" | "\\S"
-
-<char_class>     ::= <char_class_item>
-                  | <char_class_item> <char_class>
-
-<char_class_item> ::= <character>
-                   | <escaped_type>
-                   | "."
-
-<character>      ::= [a-z]
-
-<quantifier>     ::= "*"
+<expression>     ::= <term> | <term> <expression>
+<term>          ::= <factor> <quantifier>?
+<factor>        ::= <char> | "." | <escaped_char> | "[" <char_class> "]"
+<char_class>    ::= <char_class_item>+
+<char_class_item> ::= <char> | <escaped_char> | "."
+<char>          ::= [a-z]
+<escaped_char>  ::= "\\s" | "\\S"
+<quantifier>    ::= "*"
