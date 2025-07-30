@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestNextToken(t *testing.T) {
-	l := New("pa.*t")
+	l := New("pa.*tpa[ab]cpa\\s")
 	tests := []struct {
 		expectedType TokenType
 		expectedLiteral string
@@ -13,25 +13,6 @@ func TestNextToken(t *testing.T) {
 		{DOT, "."},
 		{STAR, "*"},
 		{LITERAL, "t"},
-	}
-
-	for i, test := range tests {
-		token := l.NextToken()
-		if token.Type != test.expectedType {
-			t.Fatalf("test[%d], expected type doesn't match. expected = %q, got = %q",i, token.Type, test.expectedType)
-		}
-		if token.Value != test.expectedLiteral {
-			t.Fatalf("test[%d], expected type doesn't match. expected = %q, got = %q",i, token.Value, test.expectedLiteral)
-		}
-	}
-}
-
-func TestCharacterClasses(t *testing.T) {
-	l := New("pa[ab]c")
-	tests := []struct {
-		expectedType TokenType
-		expectedLiteral string
-	} {
 		{LITERAL, "p"},
 		{LITERAL, "a"},
 		{LBRACKET, "["},
@@ -39,25 +20,6 @@ func TestCharacterClasses(t *testing.T) {
 		{LITERAL, "b"},
 		{RBRACKET, "]"},
 		{LITERAL, "c"},
-	}
-
-	for i, test := range tests {
-		token := l.NextToken()
-		if token.Type != test.expectedType {
-			t.Fatalf("test[%d], expected type doesn't match. expected = %q, got = %q",i, token.Type, test.expectedType)
-		}
-		if token.Value != test.expectedLiteral {
-			t.Fatalf("test[%d], expected type doesn't match. expected = %q, got = %q",i, token.Value, test.expectedLiteral)
-		}
-	}
-}
-
-func TestNonWhitespaceChar(t *testing.T) {
-	l := New("pa\\s")
-	tests := []struct {
-		expectedType TokenType
-		expectedLiteral string
-	} {
 		{LITERAL, "p"},
 		{LITERAL, "a"},
 		{ESCAPE, "\\"},
