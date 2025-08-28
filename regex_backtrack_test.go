@@ -248,6 +248,9 @@ func TestRegexMatchBacktrack(t *testing.T) {
 		"a*a*a*a*b": {
 			{"aaaaaaaaaaaaaa", false},
 		},
+		//"a*a*a*a*X": {
+		//	{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaY",false},
+		//},
 	}
 
 	for key, val := range cases {

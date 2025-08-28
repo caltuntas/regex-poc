@@ -394,6 +394,11 @@ func TestRegexMatch(t *testing.T) {
 			{"aaaab", true},
 			{"aaaaaaab", true},
 		},
+		/*
+		"a*a*a*a*X": {
+			{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaY",false},
+		},
+		*/
 	}
 
 	for key, val := range cases {
